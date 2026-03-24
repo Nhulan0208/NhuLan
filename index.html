@@ -1,1603 +1,647 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GCN Indoor Positioning — Demo NCKH 2026</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#050810;--bg2:#080c18;--bg3:#0c1120;--surf:#101828;--surf2:#162033;
-  --bdr:rgba(56,189,248,.1);--bdr2:rgba(56,189,248,.25);
-  --gcn:#00ffa3;--gcn2:#00c97f;--dnn:#4d9eff;--dnn2:#2563eb;
-  --ap:#fbbf24;--noise:#ff4d6d;--noise:#ff4d6d;
-  --tx:#e2e8f8;--tx2:#7b93c4;--tx3:#304060;
-  --glow-gcn:0 0 20px rgba(0,255,163,.3);
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:var(--bg)}
-body{font-family:'Outfit',sans-serif;color:var(--tx);display:flex;flex-direction:column}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(56,189,248,.07),transparent),
-             radial-gradient(ellipse 40% 30% at 90% 90%,rgba(0,255,163,.04),transparent);}
-.app{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>WiFi Fingerprinting Demo v2 - 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* HEADER */
-header{padding:0 20px;height:50px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:rgba(5,8,16,.9);backdrop-filter:blur(20px);flex-shrink:0;gap:12px;position:relative}
-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gcn),transparent)}
-.hd-left{display:flex;align-items:center;gap:12px}
-.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--gcn2),var(--dnn2));display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;box-shadow:var(--glow-gcn);flex-shrink:0}
-.hd-title{font-size:13px;font-weight:600}
-.hd-sub{font-size:9px;color:var(--tx2);font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
-.hd-right{display:flex;gap:7px;align-items:center}
-.badge{font-size:9px;font-family:'JetBrains Mono',monospace;padding:3px 9px;border-radius:20px;border:1px solid var(--bdr2);color:var(--tx2);background:rgba(56,189,248,.06);white-space:nowrap}
-.badge.live{border-color:rgba(0,255,163,.4);color:var(--gcn);background:rgba(0,255,163,.08)}
-.badge.live::before{content:'● ';animation:blink 1.4s ease infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 100%);
+            color: #fff;
+            padding: 20px;
+        }
 
-/* TABS */
-.tabs{display:flex;border-bottom:1px solid var(--bdr);background:rgba(8,12,24,.9);flex-shrink:0}
-.tab{padding:0 20px;height:42px;font-size:12px;font-weight:500;cursor:pointer;color:var(--tx3);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;transition:all .2s;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:6px}
-.tab:hover{color:var(--tx2)}.tab.active{color:var(--gcn);border-bottom-color:var(--gcn)}
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
 
-/* LAYOUT */
-.main{display:flex;flex:1;min-height:0}
-.sidebar{width:288px;flex-shrink:0;border-right:1px solid var(--bdr);background:rgba(8,12,24,.95);display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bdr2) transparent}
-.content{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
-.sb-sec{padding:12px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0}
-.sb-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.sb-lbl::after{content:'';flex:1;height:1px;background:var(--bdr)}
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.3);
+        }
 
-/* DATASET */
-.ds-list{display:flex;flex-direction:column;gap:3px}
-.ds-btn{padding:8px 10px;border-radius:7px;cursor:pointer;border:1px solid transparent;background:transparent;display:flex;align-items:center;gap:9px;transition:all .15s;text-align:left;width:100%;font-family:'Outfit',sans-serif}
-.ds-btn:hover{background:var(--surf)}.ds-btn.active{background:rgba(56,189,248,.07);border-color:var(--bdr2)}
-.ds-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.ds-name{font-size:12px;font-weight:600;color:var(--tx)}.ds-meta{font-size:9px;color:var(--tx3);margin-top:1px;font-family:'JetBrains Mono',monospace}
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+        }
 
-/* POINT SELECT */
-.pt-select{width:100%;background:var(--surf);border:1px solid var(--bdr2);border-radius:7px;color:var(--tx);font-size:11px;padding:7px 9px;font-family:'JetBrains Mono',monospace;outline:none;cursor:pointer;margin-bottom:7px}
-.pt-select:focus{border-color:var(--gcn);box-shadow:0 0 0 2px rgba(0,255,163,.1)}
-.pt-select option{background:var(--surf2)}
-.btn-random{width:100%;padding:6px;border-radius:6px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;margin-bottom:7px;background:rgba(56,189,248,.06);border:1px solid var(--bdr2);color:var(--tx2);letter-spacing:.04em}
-.btn-random:hover{border-color:var(--dnn);color:var(--dnn)}
-.btn-predict{width:100%;padding:10px;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;transition:all .2s;letter-spacing:.04em;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(0,255,163,.15),rgba(77,158,255,.15));border:1px solid rgba(0,255,163,.4);color:var(--gcn)}
-.btn-predict:hover:not(:disabled){transform:translateY(-1px);box-shadow:var(--glow-gcn)}
-.btn-predict:disabled{opacity:.3;cursor:not-allowed}
-.btn-predict.running{animation:pulse-btn .8s ease infinite}
-@keyframes pulse-btn{0%,100%{box-shadow:none}50%{box-shadow:var(--glow-gcn)}}
-.btn-reset{width:100%;padding:5px;border-radius:6px;background:transparent;border:1px solid var(--bdr);color:var(--tx3);font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;margin-top:5px;transition:all .15s;letter-spacing:.04em}
-.btn-reset:hover{border-color:var(--noise);color:var(--noise)}
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
 
-/* RESULT CARD */
-.result-card{background:var(--surf);border:1px solid var(--bdr2);border-radius:9px;padding:10px;margin-top:8px;display:none;position:relative;overflow:hidden}
-.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gcn),transparent)}
-.result-card.show{display:block;animation:slideUp .2s cubic-bezier(.16,1,.3,1)}
-@keyframes slideUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.rc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
-.rc-row:last-child{border-bottom:none}
-.rc-lbl{color:var(--tx3);font-size:9px;font-family:'JetBrains Mono',monospace}
-.rc-val{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px}
-.gcn-c{color:var(--gcn)}.dnn-c{color:var(--dnn)}
-.winner-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:3px 7px;border-radius:5px;margin-top:5px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
-.winner-gcn{background:rgba(0,255,163,.1);color:var(--gcn);border:1px solid rgba(0,255,163,.3)}
-.winner-dnn{background:rgba(77,158,255,.1);color:var(--dnn);border:1px solid rgba(77,158,255,.3)}
-.winner-note{margin-top:5px;font-size:9px;color:var(--tx3);font-family:'JetBrains Mono',monospace;line-height:1.6;border:1px solid var(--bdr);border-radius:5px;padding:5px 7px;background:rgba(255,255,255,.02)}
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-/* METRIC BOXES */
-.metric-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
-.mbox{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:9px 10px;position:relative;overflow:hidden}
-.mbox.gcn-box{border-color:rgba(0,255,163,.2)}.mbox.dnn-box{border-color:rgba(77,158,255,.2)}
-.mbox-lbl{font-size:8px;color:var(--tx3);margin-bottom:4px;display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
-.mbox-val{font-size:20px;font-weight:700;line-height:1;font-family:'JetBrains Mono',monospace}
-.mbox-unit{font-size:8px;color:var(--tx3);margin-top:1px;font-family:'JetBrains Mono',monospace}
-.mbox-bar{position:absolute;bottom:0;left:0;height:2px;background:currentColor;opacity:.4;transition:width .5s ease}
+        select, button {
+            padding: 14px 25px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
 
-/* TEST HISTORY LOG */
-.hist-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bdr2) transparent}
-.hist-item{background:var(--surf);border:1px solid var(--bdr);border-radius:7px;padding:7px 9px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
-.hist-item:hover{border-color:var(--bdr2);background:var(--surf2)}
-.hist-item.active-hist{border-color:rgba(0,255,163,.4);background:rgba(0,255,163,.05)}
-.hist-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
-.hist-item.hist-gcn::before{background:var(--gcn)}
-.hist-item.hist-dnn::before{background:var(--dnn)}
-.hist-row{display:flex;justify-content:space-between;align-items:center;font-size:9px;font-family:'JetBrains Mono',monospace}
-.hist-num{color:var(--tx3);font-weight:600}
-.hist-coords{color:var(--tx2);font-size:8px}
-.hist-errs{display:flex;gap:8px;margin-top:3px}
-.hist-gcn-err{color:var(--gcn);font-size:9px;font-weight:600;font-family:'JetBrains Mono',monospace}
-.hist-dnn-err{color:var(--dnn);font-size:9px;font-weight:600;font-family:'JetBrains Mono',monospace}
-.hist-winner{font-size:8px;font-family:'JetBrains Mono',monospace;padding:1px 5px;border-radius:3px;font-weight:700}
-.hw-gcn{background:rgba(0,255,163,.1);color:var(--gcn)}
-.hw-dnn{background:rgba(77,158,255,.1);color:var(--dnn)}
-.hist-empty{font-size:10px;color:var(--tx3);font-family:'JetBrains Mono',monospace;text-align:center;padding:12px 0}
+        select:hover, button:hover {
+            background: linear-gradient(135deg, #00ff99 0%, #00cc66 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 255, 153, 0.4);
+        }
 
-/* SESSION STATS */
-.sess-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:7px}
-.sstat{background:var(--surf);border:1px solid var(--bdr);border-radius:7px;padding:7px 8px;text-align:center}
-.sstat-val{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1}
-.sstat-lbl{font-size:8px;color:var(--tx3);font-family:'JetBrains Mono',monospace;margin-top:2px;letter-spacing:.04em}
+        select {
+            flex: 1;
+            min-width: 250px;
+        }
 
-/* ERROR DISTRIBUTION */
-.err-dist{margin-top:8px;background:var(--surf);border-radius:7px;padding:8px;border:1px solid var(--bdr)}
-.err-bar-row{margin-bottom:5px}
-.err-bar-top{display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
-.err-track{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
-.err-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.16,1,.3,1)}
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
 
-/* NOISE */
-.noise-ctrl{display:flex;flex-direction:column;gap:6px}
-.noise-note{font-size:9px;color:var(--tx3);line-height:1.6;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
-.sl-row{display:flex;align-items:center;gap:7px}
-.sl-lbl{font-size:9px;color:var(--tx2);flex:1;font-family:'JetBrains Mono',monospace}
-input[type=range]{-webkit-appearance:none;width:68px;height:3px;border-radius:2px;background:var(--surf2);outline:none;cursor:pointer}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--noise);cursor:pointer;box-shadow:0 0 5px var(--noise)}
-.sl-val{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--noise);min-width:20px;text-align:right}
-.btn-noise{width:100%;padding:6px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;letter-spacing:.04em}
-.btn-noise-off{background:var(--surf);border:1px solid var(--bdr);color:var(--tx3)}
-.btn-noise-off:hover{border-color:var(--noise);color:var(--noise)}
-.btn-noise-on{background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.5);color:var(--noise);animation:noise-glow 1.5s ease infinite}
-@keyframes noise-glow{0%,100%{box-shadow:none}50%{box-shadow:0 0 8px rgba(255,77,109,.3)}}
-.noise-status{font-size:9px;color:var(--noise);margin-top:3px;display:none;font-family:'JetBrains Mono',monospace;line-height:1.5}
+        .map-box, .stats-box {
+            background: linear-gradient(135deg, #0f0f2e 0%, #1a1a3e 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            border: 1px solid #00d4ff;
+        }
 
-/* TOGGLE */
-.tog-group{display:flex;flex-direction:column;gap:5px}
-.tog-row{display:flex;align-items:center;justify-content:space-between}
-.tog-lbl{font-size:10px;color:var(--tx2);font-family:'JetBrains Mono',monospace}
-.tog{width:32px;height:17px;border-radius:9px;background:var(--surf2);border:1px solid var(--bdr2);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
-.tog.on{background:var(--gcn);border-color:var(--gcn);box-shadow:0 0 6px rgba(0,255,163,.25)}
-.tog-thumb{width:11px;height:11px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s}
-.tog.on .tog-thumb{left:17px}
+        .map-canvas {
+            width: 100%;
+            height: 600px;
+            background: #000;
+            border-radius: 10px;
+            border: 2px solid #00d4ff;
+        }
 
-/* LEGEND */
-.legend{display:flex;flex-direction:column;gap:4px}
-.leg{display:flex;align-items:center;gap:7px;font-size:9px;color:var(--tx2);font-family:'JetBrains Mono',monospace}
+        .stats-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #00ff99;
+            color: #00ff99;
+        }
 
-/* CANVAS */
-.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-height:0;overflow:hidden;position:relative}
-canvas#floor{border:1px solid var(--bdr2);border-radius:10px;background:var(--bg3);max-width:100%;max-height:100%;cursor:crosshair}
+        .stat-row {
+            margin: 18px 0;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00ff99;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
 
-/* STATS OVERLAY */
-.stats-overlay{position:absolute;bottom:20px;left:20px;background:rgba(8,12,24,.88);backdrop-filter:blur(12px);border:1px solid var(--bdr2);border-radius:9px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tx2);display:none;line-height:1.9;min-width:170px}
-.stats-overlay.show{display:block}
-.stat-row{display:flex;justify-content:space-between;gap:14px}
-.stat-key{color:var(--tx3)}.stat-gcn{color:var(--gcn);font-weight:600}.stat-dnn{color:var(--dnn);font-weight:600}
+        .stat-row:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(5px);
+        }
 
-/* CLICK HINT */
-.click-hint{position:absolute;top:20px;right:20px;background:rgba(8,12,24,.8);border:1px solid var(--bdr);border-radius:7px;padding:7px 11px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--tx3);pointer-events:none}
+        .stat-label {
+            font-size: 0.95em;
+            opacity: 0.8;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-/* BOTTOM BAR */
-.bottom{border-top:1px solid var(--bdr);background:rgba(8,12,24,.95);padding:6px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
-.bb{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);font-family:'JetBrains Mono',monospace}
-.bb-val{font-weight:600}
-.bdiv{width:1px;height:12px;background:var(--bdr)}
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00ff99;
+        }
 
-/* TOOLTIP */
-#tip{position:fixed;pointer-events:none;z-index:9998;background:rgba(8,12,24,.96);backdrop-filter:blur(12px);border:1px solid var(--bdr2);border-radius:9px;padding:9px 12px;font-size:10px;line-height:1.8;color:var(--tx);box-shadow:0 8px 32px rgba(0,0,0,.7);display:none;max-width:240px;font-family:'JetBrains Mono',monospace}
-#tip .tt{font-weight:700;font-size:11px;margin-bottom:3px;color:var(--tx)}
-#tip .tg{color:var(--gcn)}#tip .td{color:var(--dnn)}
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
 
-/* RESULTS TAB */
-#panel-results{display:none;overflow-y:auto;flex:1;padding:20px;scrollbar-width:thin;scrollbar-color:var(--bdr2) transparent}
-.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:16px}
-.res-card{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;position:relative}
-.res-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gcn),transparent)}
-.res-head{padding:11px 15px;border-bottom:1px solid var(--bdr);font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
-.res-body{padding:12px}
-.big-table{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.bt-head{padding:12px 16px;border-bottom:1px solid var(--bdr);font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px}
-table.sum{width:100%;border-collapse:collapse;font-size:11px}
-table.sum th{padding:8px 14px;text-align:left;font-size:8px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--bdr);background:rgba(255,255,255,.02)}
-table.sum td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--tx2)}
-table.sum tr:last-child td{border-bottom:none}
-table.sum tr:hover td{background:rgba(56,189,248,.03)}
-.tgcn{color:var(--gcn);font-weight:700;font-family:'JetBrains Mono',monospace}
-.tdnn{color:var(--dnn);font-weight:600;font-family:'JetBrains Mono',monospace}
-.tname{font-weight:700;color:var(--tx)}
-.timp{color:var(--gcn);font-size:10px;font-weight:700;background:rgba(0,255,163,.08);padding:2px 7px;border-radius:4px;display:inline-block;font-family:'JetBrains Mono',monospace}
-.tdim{color:var(--tx3);font-size:9px;font-family:'JetBrains Mono',monospace}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 6px;
+        }
 
-/* CHART CONTAINER — explicit height to avoid 0 */
-.chart-box{width:100%;height:220px;position:relative}
-.chart-box canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
-.arch-box{width:100%;height:96px;position:relative}
-.arch-box canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
-</style>
+        .dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+        }
+
+        .dot-true { background: #fff; color: #00ff99; }
+        .dot-gcn { background: #00ff99; }
+        .dot-dnn { background: #ff6b6b; }
+        .dot-hybrid { background: #ffd93d; }
+
+        .errors-section {
+            background: linear-gradient(135deg, #0f0f2e 0%, #1a1a3e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            border: 1px solid #00d4ff;
+            margin-bottom: 30px;
+        }
+
+        .error-row {
+            display: flex;
+            gap: 15px;
+            margin: 18px 0;
+            align-items: center;
+        }
+
+        .error-label {
+            min-width: 100px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .error-bar {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .bar-gcn { background: linear-gradient(90deg, #00ff99 0%, #00cc6e 100%); }
+        .bar-dnn { background: linear-gradient(90deg, #ff6b6b 0%, #ff4444 100%); }
+        .bar-hybrid { background: linear-gradient(90deg, #ffd93d 0%, #ffb700 100%); }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-box {
+            background: linear-gradient(135deg, #0f0f2e 0%, #1a1a3e 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            border: 1px solid #00d4ff;
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #00ff99;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 350px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+            border-top: 1px solid #333;
+            margin-top: 40px;
+        }
+
+        .error-message {
+            background: rgba(255, 107, 107, 0.2);
+            border-left: 4px solid #ff6b6b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 153, 0.2);
+            border-left: 4px solid #00ff99;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-<div class="app">
+    <div class="container">
+        <header>
+            <h1>📍 WiFi Fingerprinting - Định vị trong nhà</h1>
+            <p class="subtitle">So sánh GCN vs DNN vs Hybrid Model | Không sử dụng vị trí AP</p>
+        </header>
 
-<header>
-  <div class="hd-left">
-    <div class="logo">GCN</div>
-    <div>
-      <div class="hd-title">Wi-Fi Fingerprint Indoor Positioning</div>
-      <div class="hd-sub">GCN · NCKH 2026 · ĐH Công Thương TP.HCM</div>
-    </div>
-  </div>
-  <div class="hd-right">
-    <span class="badge">KHOA HỌC DỮ LIỆU</span>
-    <span class="badge live" id="data-badge">Đang tải…</span>
-  </div>
-</header>
-
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('sim',this)">🗺 Mô phỏng tương tác</button>
-  <button class="tab" onclick="switchTab('results',this)">📊 Kết quả thực nghiệm</button>
-</div>
-
-<div id="panel-sim" class="main">
-  <div class="sidebar">
-
-    <!-- Dataset -->
-    <div class="sb-sec">
-      <div class="sb-lbl">Bộ dữ liệu</div>
-      <div class="ds-list" id="ds-list"></div>
-    </div>
-
-    <!-- Test point -->
-    <div class="sb-sec">
-      <div class="sb-lbl">Chọn điểm test</div>
-      <select class="pt-select" id="pt-select" onchange="onPointSelect()">
-        <option value="">— chọn hoặc click mặt bằng —</option>
-      </select>
-      <button class="btn-random" onclick="pickRandom()">⚡ Chọn ngẫu nhiên</button>
-      <button class="btn-predict" id="btn-predict" onclick="runPredict()" disabled>▶ CHẠY DỰ ĐOÁN</button>
-      <button class="btn-reset" id="btn-reset" onclick="resetAll()" style="display:none">↺ xoá tất cả kết quả</button>
-
-      <div class="result-card" id="result-card">
-        <div class="rc-row"><span class="rc-lbl">📍 VỊ TRÍ THẬT</span><span class="rc-val" id="rc-true">—</span></div>
-        <div class="rc-row"><span class="rc-lbl gcn-c">◈ GCN DỰ ĐOÁN</span><span class="rc-val gcn-c" id="rc-gcn">—</span></div>
-        <div class="rc-row"><span class="rc-lbl dnn-c">◈ DNN DỰ ĐOÁN</span><span class="rc-val dnn-c" id="rc-dnn">—</span></div>
-        <div class="rc-row"><span class="rc-lbl">SAI SỐ GCN</span><span class="rc-val gcn-c" id="rc-gcn-err">—</span></div>
-        <div class="rc-row"><span class="rc-lbl">SAI SỐ DNN</span><span class="rc-val dnn-c" id="rc-dnn-err">—</span></div>
-        <div id="rc-winner"></div>
-      </div>
-    </div>
-
-    <!-- Mean error + session stats -->
-    <div class="sb-sec">
-      <div class="sb-lbl">Sai số TB toàn tập</div>
-      <div class="metric-pair">
-        <div class="mbox gcn-box">
-          <div class="mbox-lbl"><span style="width:6px;height:6px;border-radius:50%;background:var(--gcn);display:inline-block"></span>GCN</div>
-          <div class="mbox-val gcn-c" id="sb-gcn">—</div>
-          <div class="mbox-unit">mét</div>
-          <div class="mbox-bar gcn-c" id="bar-gcn" style="width:0%"></div>
+        <div class="controls">
+            <select id="datasetSelect" onchange="loadDataset()">
+                <option value="HCXY">HCXY - 860 samples</option>
+                <option value="SYL">SYL - 1020 samples</option>
+                <option value="UJILIB">UJILIB - 78K samples</option>
+                <option value="UjiIndoorLoc">UjiIndoorLoc - 1111 samples</option>
+            </select>
+            <button onclick="randomizeSample()">🎲 Random Vị trí</button>
         </div>
-        <div class="mbox dnn-box">
-          <div class="mbox-lbl"><span style="width:6px;height:6px;border-radius:50%;background:var(--dnn);display:inline-block"></span>DNN</div>
-          <div class="mbox-val dnn-c" id="sb-dnn">—</div>
-          <div class="mbox-unit">mét</div>
-          <div class="mbox-bar dnn-c" id="bar-dnn" style="width:0%"></div>
+
+        <div id="errorMsg" class="error-message"></div>
+        <div id="successMsg" class="success-message"></div>
+
+        <div class="main-grid">
+            <div class="map-box">
+                <canvas id="mapCanvas" class="map-canvas"></canvas>
+            </div>
+
+            <div class="stats-box">
+                <div class="stats-title">📊 Thống kê</div>
+
+                <div class="stat-row">
+                    <div class="stat-label">Dataset</div>
+                    <div class="stat-value" id="datasetName">HCXY</div>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-label">Mẫu Test</div>
+                    <div class="stat-value" id="numSamples">-</div>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-label">Vị trí hiện tại</div>
+                    <div class="stat-value" id="currentPos" style="font-size: 1.2em;">-</div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="dot dot-true"></div>
+                        <span>Thực tế</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot dot-gcn"></div>
+                        <span>GCN</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot dot-dnn"></div>
+                        <span>DNN</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot dot-hybrid"></div>
+                        <span>Hybrid</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="err-dist" id="err-dist" style="display:none">
-        <div class="err-bar-row"><div class="err-bar-top"><span class="gcn-c">GCN</span><span class="gcn-c" id="eb-gcn">—</span></div><div class="err-track"><div class="err-fill" id="ef-gcn" style="width:0%;background:var(--gcn)"></div></div></div>
-        <div class="err-bar-row"><div class="err-bar-top"><span class="dnn-c">DNN</span><span class="dnn-c" id="eb-dnn">—</span></div><div class="err-track"><div class="err-fill" id="ef-dnn" style="width:0%;background:var(--dnn)"></div></div></div>
-      </div>
-      <!-- Session summary -->
-      <div class="sess-stats" id="sess-stats" style="display:none">
-        <div class="sstat"><div class="sstat-val gcn-c" id="ss-gcn-avg">—</div><div class="sstat-lbl">GCN avg</div></div>
-        <div class="sstat"><div class="sstat-val dnn-c" id="ss-dnn-avg">—</div><div class="sstat-lbl">DNN avg</div></div>
-        <div class="sstat"><div class="sstat-val gcn-c" id="ss-win-rate">—</div><div class="sstat-lbl">GCN wins</div></div>
-      </div>
-    </div>
 
-    <!-- AP gây nhiễu — chỉ visual, sai số vẫn từ JSON -->
-    <div class="sb-sec">
-      <div class="sb-lbl">AP gây nhiễu (visual)</div>
-      <div style="font-size:9px;color:var(--tx3);font-family:'JetBrains Mono',monospace;margin-bottom:7px;line-height:1.6">
-        Thêm AP giả trên mặt bằng để minh họa<br>GCN kháng nhiễu tốt hơn DNN.<br>
-        <b style="color:var(--noise)">Sai số vẫn 100% từ model thật.</b>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:9px;color:var(--tx2);flex:1;font-family:'JetBrains Mono',monospace">Số AP nhiễu</span>
-          <input type="range" id="sl-cnt" min="0" max="10" value="0" oninput="onNoiseChange()"
-            style="-webkit-appearance:none;width:68px;height:3px;border-radius:2px;background:var(--surf2);outline:none;cursor:pointer">
-          <span id="val-cnt" style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--noise);min-width:18px;text-align:right">0</span>
+        <div class="errors-section">
+            <div class="stats-title">⚡ So sánh Sai số (m)</div>
+
+            <div class="error-row">
+                <div class="error-label">GCN</div>
+                <div class="error-bar bar-gcn" id="gcnErrorBar">-</div>
+            </div>
+
+            <div class="error-row">
+                <div class="error-label">DNN</div>
+                <div class="error-bar bar-dnn" id="dnnErrorBar">-</div>
+            </div>
+
+            <div class="error-row">
+                <div class="error-label">Hybrid</div>
+                <div class="error-bar bar-hybrid" id="hybridErrorBar">-</div>
+            </div>
         </div>
-        <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:9px;color:var(--tx2);flex:1;font-family:'JetBrains Mono',monospace">Mật độ nhiễu</span>
-          <input type="range" id="sl-str" min="1" max="5" value="2" oninput="onNoiseChange()"
-            style="-webkit-appearance:none;width:68px;height:3px;border-radius:2px;background:var(--surf2);outline:none;cursor:pointer">
-          <span id="val-str" style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--noise);min-width:20px;text-align:right">2×</span>
+
+        <div class="charts-grid">
+            <div class="chart-box">
+                <div class="chart-title">📈 Phân bố Sai số</div>
+                <div class="chart-canvas">
+                    <canvas id="errorHistogram"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">🎯 Độ Chính xác</div>
+                <div class="chart-canvas">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+            </div>
         </div>
-        <button id="btn-noise" onclick="toggleNoise()"
-          style="width:100%;padding:6px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;letter-spacing:.04em;background:var(--surf);border:1px solid var(--bdr);color:var(--tx3)">
-          ⚡ Hiện AP nhiễu
-        </button>
-        <div id="noise-status" style="font-size:9px;color:var(--noise);display:none;font-family:'JetBrains Mono',monospace;line-height:1.5"></div>
-      </div>
     </div>
 
-    <!-- Toggles -->
-    <div class="sb-sec">
-      <div class="sb-lbl">Hiển thị</div>
-      <div class="tog-group">
-        <div class="tog-row"><span class="tog-lbl">Vị trí thật</span><div class="tog on" onclick="toggleLayer('true',this)"><div class="tog-thumb"></div></div></div>
-        <div class="tog-row"><span class="tog-lbl" style="color:var(--gcn)">GCN predict</span><div class="tog on" onclick="toggleLayer('gcn',this)"><div class="tog-thumb"></div></div></div>
-        <div class="tog-row"><span class="tog-lbl" style="color:var(--dnn)">DNN predict</span><div class="tog on" onclick="toggleLayer('dnn',this)"><div class="tog-thumb"></div></div></div>
-        <div class="tog-row"><span class="tog-lbl">Đường sai số</span><div class="tog on" onclick="toggleLayer('err',this)"><div class="tog-thumb"></div></div></div>
-        <div class="tog-row"><span class="tog-lbl">Router Wi-Fi</span><div class="tog on" onclick="toggleLayer('ap',this)"><div class="tog-thumb"></div></div></div>
+    <footer>
+        <p>© 2026 WiFi Fingerprinting IPS Demo | HCMC University of Industry and Trade</p>
+    </footer>
 
-        <div class="tog-row"><span class="tog-lbl" style="color:var(--noise)">AP nhiễu</span><div class="tog on" onclick="toggleLayer('noise',this)"><div class="tog-thumb"></div></div></div>
-        <div class="tog-row"><span class="tog-lbl">Vùng phủ sóng</span><div class="tog on" onclick="toggleLayer('cov',this)"><div class="tog-thumb"></div></div></div>
-        <div class="tog-row"><span class="tog-lbl">Tất cả điểm test</span><div class="tog on" onclick="toggleLayer('history',this)"><div class="tog-thumb"></div></div></div>
-      </div>
-    </div>
+    <script>
+        let allData = {};
+        let currentDataset = "HCXY";
+        let currentSampleIndex = 0;
+        let errorHistogramChart = null;
+        let accuracyChartInstance = null;
 
-    <!-- Legend -->
-    <div class="sb-sec" style="border-bottom:none">
-      <div class="sb-lbl">Chú thích</div>
-      <div class="legend">
-        <div class="leg"><span style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block;flex-shrink:0"></span>Vị trí thật</div>
-        <div class="leg"><span style="width:8px;height:8px;border-radius:50%;border:2px solid var(--gcn);display:inline-block;flex-shrink:0"></span>GCN predict</div>
-        <div class="leg"><span style="width:8px;height:8px;border-radius:50%;border:2px dashed var(--dnn);display:inline-block;flex-shrink:0"></span>DNN predict</div>
-        <div class="leg"><span style="width:8px;height:6px;border-radius:2px;background:var(--ap);display:inline-block;flex-shrink:0"></span>Router Wi-Fi</div>
-
-        <div class="leg"><span style="width:8px;height:6px;border-radius:2px;background:var(--noise);display:inline-block;flex-shrink:0"></span>AP nhiễu (visual only)</div>
-        <div class="leg" style="margin-top:4px;color:var(--tx3);font-size:8px">💡 Click vào mặt bằng để chọn & test tức thì</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CANVAS AREA -->
-  <div class="content">
-    <div class="canvas-wrap">
-      <canvas id="floor" onclick="onCanvasClick(event)"></canvas>
-      <div class="stats-overlay" id="stats-overlay">
-        <div class="stat-row"><span class="stat-key">DATASET</span><span id="so-ds" style="color:var(--tx)">—</span></div>
-        <div class="stat-row"><span class="stat-key">N_AP</span><span id="so-nap" style="color:var(--tx)">—</span></div>
-        <div class="stat-row"><span class="stat-key">GCN MEAN</span><span class="stat-gcn" id="so-gcn">—</span></div>
-        <div class="stat-row"><span class="stat-key">DNN MEAN</span><span class="stat-dnn" id="so-dnn">—</span></div>
-        <div class="stat-row"><span class="stat-key">IMPROVE</span><span class="stat-gcn" id="so-imp">—</span></div>
-      </div>
-      <div class="click-hint">Click lên mặt bằng → tự động test</div>
-    </div>
-    <div class="bottom">
-      <div class="bb">DS: <span class="bb-val" id="bb-ds">—</span></div>
-      <div class="bdiv"></div>
-      <div class="bb">Tests: <span class="bb-val gcn-c" id="bb-n">0</span></div>
-      <div class="bdiv"></div>
-      <div class="bb">GCN avg: <span class="bb-val gcn-c" id="bb-gcn">—</span>m</div>
-      <div class="bdiv"></div>
-      <div class="bb">DNN avg: <span class="bb-val dnn-c" id="bb-dnn">—</span>m</div>
-      <div class="bdiv"></div>
-      <div class="bb" style="color:var(--tx3);font-size:9px" id="bb-hint">← Click mặt bằng hoặc chọn dropdown</div>
-      <button id="bb-hist-btn" onclick="switchTab('results',document.querySelectorAll('.tab')[1])"
-        style="display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:5px;
-               background:rgba(0,255,163,.1);border:1px solid rgba(0,255,163,.3);
-               color:var(--gcn);font-size:9px;font-family:'JetBrains Mono',monospace;
-               cursor:pointer;letter-spacing:.04em;white-space:nowrap">
-        📋 Xem lịch sử
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- RESULTS PANEL -->
-<div id="panel-results">
-  <div class="big-table">
-    <div class="bt-head">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gcn)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Tổng hợp — GCN vs DNN (toàn tập test độc lập)
-    </div>
-    <table class="sum">
-      <thead><tr><th>Dataset</th><th>Quy mô</th><th>APs</th><th>DNN (m)</th><th>GCN (m)</th><th>Cải thiện</th></tr></thead>
-      <tbody id="sum-tbody"></tbody>
-    </table>
-  </div>
-  <!-- HISTORY TABLE in results tab -->
-  <div class="big-table" id="hist-table-wrap" style="display:none">
-    <div class="bt-head">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gcn)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      Lịch sử test phiên này (<span id="hist-count">0</span> lần)
-    </div>
-    <div style="overflow-x:auto">
-      <table class="sum" id="hist-table">
-        <thead><tr>
-          <th>#</th><th>Vị trí thật</th>
-          <th style="color:var(--gcn)">GCN dự đoán</th>
-          <th style="color:var(--gcn)">Sai số GCN</th>
-          <th style="color:var(--dnn)">DNN dự đoán</th>
-          <th style="color:var(--dnn)">Sai số DNN</th>
-          <th>Kết quả</th>
-        </tr></thead>
-        <tbody id="hist-tbody"></tbody>
-      </table>
-    </div>
-    <div style="padding:10px 16px;border-top:1px solid var(--bdr);display:flex;gap:20px;font-size:10px;font-family:'JetBrains Mono',monospace" id="hist-summary" style="display:none">
-      <span style="color:var(--tx3)">Avg GCN: <b class="gcn-c" id="hs-gcn">—</b></span>
-      <span style="color:var(--tx3)">Avg DNN: <b class="dnn-c" id="hs-dnn">—</b></span>
-      <span style="color:var(--tx3)">GCN thắng: <b class="gcn-c" id="hs-win">—</b></span>
-    </div>
-  </div>
-
-  <div class="res-grid">
-    <div class="res-card">
-      <div class="res-head">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gcn)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-        Mean Error (mét)
-      </div>
-      <div class="res-body"><div class="chart-box"><canvas id="chart-err"></canvas></div></div>
-    </div>
-    <div class="res-card">
-      <div class="res-head">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gcn)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        % Cải thiện GCN vs DNN
-      </div>
-      <div class="res-body"><div class="chart-box"><canvas id="chart-imp"></canvas></div></div>
-    </div>
-  </div>
-  <div class="res-card" style="margin-bottom:16px">
-    <div class="res-head">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gcn)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-      Kiến trúc mô hình GCN đề xuất
-    </div>
-    <div class="res-body"><div class="arch-box"><canvas id="arch-canvas"></canvas></div></div>
-  </div>
-</div>
-</div>
-<div id="tip"></div>
-
-<script>
-// ══════════════════════════════════════════════════════
-const FLOORS = {
-  HCXY:{W:60,H:40,color:'#f97316',
-    furniture:[
-      // Khu A-D (tầng 1) - bàn làm việc
-      {type:'desk',x:1.5,y:1.5,w:4,h:2},{type:'desk',x:1.5,y:5,w:4,h:2},{type:'desk',x:1.5,y:8.5,w:4,h:2},
-      {type:'desk',x:16.5,y:1.5,w:4,h:2},{type:'desk',x:16.5,y:5,w:4,h:2},{type:'desk',x:16.5,y:8.5,w:4,h:2},
-      {type:'desk',x:31.5,y:1.5,w:4,h:2},{type:'desk',x:31.5,y:5,w:4,h:2},
-      {type:'desk',x:46.5,y:1.5,w:4,h:2},{type:'desk',x:46.5,y:5,w:4,h:2},
-      // Ghế
-      {type:'chair',x:2,y:4},{type:'chair',x:4,y:4},{type:'chair',x:17,y:4},{type:'chair',x:19,y:4},
-      {type:'chair',x:32,y:4},{type:'chair',x:34,y:4},{type:'chair',x:47,y:4},
-      // Khu E-G (tầng 2) - bàn dài
-      {type:'table',x:2,y:22,w:14,h:3},{type:'table',x:22,y:22,w:14,h:3},{type:'table',x:42,y:22,w:14,h:3},
-      {type:'table',x:2,y:28,w:14,h:3},{type:'table',x:22,y:28,w:14,h:3},
-      // Cột
-      {type:'pillar',x:7.5,y:19},{type:'pillar',x:22.5,y:19},{type:'pillar',x:37.5,y:19},{type:'pillar',x:52.5,y:19},
-      // Cửa
-      {type:'door',x:14,y:19.5,w:2,h:1},{type:'door',x:29,y:19.5,w:2,h:1},{type:'door',x:44,y:19.5,w:2,h:1},
-    ],
-    rooms:[{x:0,y:0,w:15,h:20,label:'Khu A',c:'rgba(249,115,22,.05)'},{x:15,y:0,w:15,h:20,label:'Khu B',c:'rgba(249,115,22,.05)'},{x:30,y:0,w:15,h:20,label:'Khu C',c:'rgba(249,115,22,.05)'},{x:45,y:0,w:15,h:20,label:'Khu D',c:'rgba(249,115,22,.05)'},{x:0,y:20,w:20,h:20,label:'Khu E',c:'rgba(249,115,22,.03)'},{x:20,y:20,w:20,h:20,label:'Khu F',c:'rgba(249,115,22,.03)'},{x:40,y:20,w:20,h:20,label:'Khu G',c:'rgba(249,115,22,.03)'}],
-    walls:[{x:15,y:0,w:.5,h:20},{x:30,y:0,w:.5,h:20},{x:45,y:0,w:.5,h:20},{x:0,y:20,w:60,h:.5},{x:20,y:20,w:.5,h:20},{x:40,y:20,w:.5,h:20},{x:8,y:0,w:.5,h:10},{x:38,y:20,w:.5,h:10},{x:0,y:30,w:20,h:.5},{x:40,y:30,w:20,h:.5}],
-    aps:[{x:7,y:5},{x:15,y:5},{x:22,y:5},{x:30,y:5},{x:37,y:5},{x:45,y:5},{x:52,y:5},{x:57,y:5},{x:4,y:10},{x:12,y:10},{x:22,y:10},{x:30,y:10},{x:37,y:10},{x:48,y:10},{x:57,y:10},{x:7,y:15},{x:22,y:15},{x:37,y:15},{x:52,y:15},{x:3,y:23},{x:12,y:28},{x:20,y:35},{x:30,y:25},{x:30,y:33},{x:42,y:28},{x:50,y:35},{x:57,y:25}]},
-  SYL:{W:52,H:40,color:'#a78bfa',
-    furniture:[
-      // Lab 1,2,3 - bàn thí nghiệm
-      {type:'table',x:2,y:2,w:12,h:2.5},{type:'table',x:2,y:6,w:12,h:2.5},{type:'table',x:2,y:10,w:12,h:2.5},
-      {type:'table',x:20,y:2,w:10,h:2.5},{type:'table',x:20,y:7,w:10,h:2.5},{type:'table',x:20,y:12,w:10,h:2.5},
-      {type:'table',x:35,y:2,w:12,h:2.5},{type:'table',x:35,y:6,w:12,h:2.5},{type:'table',x:35,y:10,w:12,h:2.5},
-      // Ghế lab
-      {type:'chair',x:3,y:5},{type:'chair',x:7,y:5},{type:'chair',x:11,y:5},
-      {type:'chair',x:21,y:5.5},{type:'chair',x:25,y:5.5},{type:'chair',x:29,y:5.5},
-      // Văn phòng - bàn làm việc
-      {type:'desk',x:1.5,y:29,w:4,h:2},{type:'desk',x:6.5,y:29,w:4,h:2},{type:'desk',x:11.5,y:29,w:4,h:2},
-      {type:'desk',x:19,y:29,w:4,h:2},{type:'desk',x:24,y:29,w:4,h:2},
-      // Kho - rack
-      {type:'rack',x:35,y:29,w:4,h:10},{type:'rack',x:40,y:29,w:4,h:10},{type:'rack',x:45,y:29,w:4,h:10},
-      // Cột hành lang
-      {type:'pillar',x:10,y:16},{type:'pillar',x:26,y:16},{type:'pillar',x:42,y:16},
-      // Cửa
-      {type:'door',x:17,y:16,w:2,h:1},{type:'door',x:33,y:16,w:2,h:1},
-      {type:'door',x:9,y:28,w:2,h:1},{type:'door',x:25,y:28,w:2,h:1},
-    ],
-    rooms:[{x:0,y:0,w:18,h:16,label:'Lab 1',c:'rgba(167,139,250,.05)'},{x:18,y:0,w:16,h:16,label:'Lab 2',c:'rgba(167,139,250,.05)'},{x:34,y:0,w:18,h:16,label:'Lab 3',c:'rgba(167,139,250,.05)'},{x:0,y:16,w:26,h:12,label:'Hành lang A',c:'rgba(167,139,250,.02)'},{x:26,y:16,w:26,h:12,label:'Hành lang B',c:'rgba(167,139,250,.02)'},{x:0,y:28,w:18,h:12,label:'Văn phòng',c:'rgba(167,139,250,.04)'},{x:18,y:28,w:16,h:12,label:'Phòng họp',c:'rgba(167,139,250,.04)'},{x:34,y:28,w:18,h:12,label:'Kho',c:'rgba(167,139,250,.04)'}],
-    walls:[{x:18,y:0,w:.5,h:16},{x:34,y:0,w:.5,h:16},{x:0,y:16,w:52,h:.5},{x:26,y:16,w:.5,h:12},{x:0,y:28,w:52,h:.5},{x:18,y:28,w:.5,h:12},{x:34,y:28,w:.5,h:12},{x:10,y:16,w:.5,h:12},{x:42,y:16,w:.5,h:12}],
-    aps:[{x:5,y:4},{x:9,y:8},{x:14,y:4},{x:18,y:8},{x:22,y:4},{x:26,y:8},{x:31,y:4},{x:35,y:8},{x:40,y:4},{x:44,y:8},{x:49,y:4},{x:5,y:12},{x:14,y:12},{x:22,y:12},{x:31,y:12},{x:40,y:12},{x:49,y:12},{x:4,y:20},{x:9,y:22},{x:18,y:20},{x:26,y:22},{x:34,y:20},{x:43,y:22},{x:49,y:20},{x:4,y:32},{x:9,y:34},{x:18,y:32},{x:26,y:34},{x:34,y:32},{x:43,y:34},{x:49,y:32}]},
-  UJILIB3:{W:32,H:28,color:'#f472b6',
-    furniture:[
-      // Khu A,B - phòng học
-      {type:'desk',x:1,y:1,w:5,h:1.5},{type:'desk',x:1,y:3.5,w:5,h:1.5},{type:'desk',x:1,y:6,w:5,h:1.5},
-      {type:'desk',x:9,y:1,w:5,h:1.5},{type:'desk',x:9,y:3.5,w:5,h:1.5},{type:'desk',x:9,y:6,w:5,h:1.5},
-      {type:'desk',x:17,y:1,w:5,h:1.5},{type:'desk',x:17,y:3.5,w:5,h:1.5},{type:'desk',x:17,y:6,w:5,h:1.5},
-      {type:'desk',x:25,y:1,w:5,h:1.5},{type:'desk',x:25,y:3.5,w:5,h:1.5},
-      // Bảng đen / whiteboard
-      {type:'board',x:0.5,y:11.5,w:6,h:1},{type:'board',x:16.5,y:11.5,w:6,h:1},
-      // Khu C,D
-      {type:'desk',x:1,y:15.5,w:5,h:1.5},{type:'desk',x:1,y:18,w:5,h:1.5},{type:'desk',x:1,y:20.5,w:5,h:1.5},
-      {type:'desk',x:9,y:15.5,w:5,h:1.5},{type:'desk',x:9,y:18,w:5,h:1.5},
-      {type:'desk',x:17,y:15.5,w:5,h:1.5},{type:'desk',x:25,y:15.5,w:5,h:1.5},{type:'desk',x:25,y:18,w:5,h:1.5},
-      // Ghế sinh viên
-      {type:'chair',x:2,y:3},{type:'chair',x:4,y:3},{type:'chair',x:10,y:3},{type:'chair',x:12,y:3},
-      // Cửa
-      {type:'door',x:7,y:14,w:2,h:.8},{type:'door',x:23,y:14,w:2,h:.8},
-      {type:'door',x:15,y:0,w:2,h:.8},
-    ],
-    rooms:[{x:0,y:0,w:16,h:14,label:'T3 Khu A',c:'rgba(244,114,182,.06)'},{x:16,y:0,w:16,h:14,label:'T3 Khu B',c:'rgba(244,114,182,.06)'},{x:0,y:14,w:16,h:14,label:'T3 Khu C',c:'rgba(244,114,182,.03)'},{x:16,y:14,w:16,h:14,label:'T3 Khu D',c:'rgba(244,114,182,.03)'}],
-    walls:[{x:16,y:0,w:.5,h:28},{x:0,y:14,w:32,h:.5},{x:8,y:0,w:.5,h:14},{x:24,y:0,w:.5,h:14},{x:8,y:14,w:.5,h:14},{x:24,y:14,w:.5,h:14},{x:0,y:7,w:8,h:.5},{x:24,y:21,w:8,h:.5}],
-    aps:[{x:1,y:1.5},{x:4,y:3.5},{x:7,y:1.5},{x:12,y:3.5},{x:16,y:1.5},{x:20,y:3.5},{x:24,y:1.5},{x:28,y:3.5},{x:31,y:1.5},{x:2,y:7},{x:6,y:5.5},{x:10,y:7},{x:14,y:5.5},{x:18,y:7},{x:22,y:5.5},{x:26,y:7},{x:30,y:5.5},{x:1,y:16},{x:4,y:17.5},{x:8,y:16},{x:12,y:17.5},{x:16,y:16},{x:20,y:17.5},{x:24,y:16},{x:28,y:17.5},{x:31,y:16},{x:4,y:22},{x:12,y:24},{x:20,y:22},{x:28,y:24}]},
-  UJILIB5:{W:32,H:28,color:'#fb923c',
-    furniture:[
-      {type:'desk',x:1,y:1,w:5,h:1.5},{type:'desk',x:1,y:3.5,w:5,h:1.5},{type:'desk',x:1,y:6,w:5,h:1.5},
-      {type:'desk',x:9,y:1,w:5,h:1.5},{type:'desk',x:9,y:3.5,w:5,h:1.5},
-      {type:'desk',x:17,y:1,w:5,h:1.5},{type:'desk',x:17,y:3.5,w:5,h:1.5},{type:'desk',x:17,y:6,w:5,h:1.5},
-      {type:'desk',x:25,y:1,w:5,h:1.5},{type:'desk',x:25,y:3.5,w:5,h:1.5},
-      {type:'board',x:0.5,y:11.5,w:6,h:1},{type:'board',x:16.5,y:11.5,w:6,h:1},
-      {type:'desk',x:1,y:15.5,w:5,h:1.5},{type:'desk',x:1,y:18,w:5,h:1.5},{type:'desk',x:1,y:20.5,w:5,h:1.5},
-      {type:'desk',x:9,y:15.5,w:5,h:1.5},{type:'desk',x:17,y:15.5,w:5,h:1.5},{type:'desk',x:25,y:15.5,w:5,h:1.5},
-      {type:'chair',x:2,y:3},{type:'chair',x:4,y:3},{type:'chair',x:18,y:3},{type:'chair',x:20,y:3},
-      {type:'door',x:7,y:14,w:2,h:.8},{type:'door',x:23,y:14,w:2,h:.8},{type:'door',x:15,y:0,w:2,h:.8},
-    ],
-    rooms:[{x:0,y:0,w:16,h:14,label:'T5 Khu A',c:'rgba(251,146,60,.06)'},{x:16,y:0,w:16,h:14,label:'T5 Khu B',c:'rgba(251,146,60,.06)'},{x:0,y:14,w:16,h:14,label:'T5 Khu C',c:'rgba(251,146,60,.03)'},{x:16,y:14,w:16,h:14,label:'T5 Khu D',c:'rgba(251,146,60,.03)'}],
-    walls:[{x:16,y:0,w:.5,h:28},{x:0,y:14,w:32,h:.5},{x:8,y:0,w:.5,h:14},{x:24,y:0,w:.5,h:14},{x:8,y:14,w:.5,h:14},{x:24,y:14,w:.5,h:14}],
-    aps:[{x:1,y:1.5},{x:4,y:3.5},{x:7,y:1.5},{x:12,y:3.5},{x:16,y:1.5},{x:20,y:3.5},{x:24,y:1.5},{x:28,y:3.5},{x:31,y:1.5},{x:2,y:7},{x:8,y:5.5},{x:14,y:7},{x:20,y:5.5},{x:26,y:7},{x:31,y:5.5},{x:1,y:16},{x:4,y:17.5},{x:8,y:16},{x:12,y:17.5},{x:16,y:16},{x:20,y:17.5},{x:24,y:16},{x:28,y:17.5},{x:31,y:16},{x:6,y:24},{x:16,y:22},{x:26,y:24}]},
-  UJIDOORLOC:{W:90,H:32,color:'#38bdf8',
-    furniture:[
-      // Tòa 1 - mỗi tầng có bàn
-      {type:'desk',x:1,y:1,w:10,h:2},{type:'desk',x:1,y:7.5,w:10,h:2},{type:'desk',x:1,y:14.5,w:10,h:2},{type:'desk',x:1,y:21.5,w:10,h:2},
-      {type:'desk',x:16,y:1,w:10,h:2},{type:'desk',x:16,y:7.5,w:10,h:2},{type:'desk',x:16,y:14.5,w:10,h:2},
-      // Tòa 2
-      {type:'desk',x:32,y:1,w:10,h:2},{type:'desk',x:32,y:7.5,w:10,h:2},{type:'desk',x:32,y:14.5,w:10,h:2},{type:'desk',x:32,y:21.5,w:10,h:2},
-      {type:'desk',x:46,y:1,w:10,h:2},{type:'desk',x:46,y:7.5,w:10,h:2},{type:'desk',x:46,y:14.5,w:10,h:2},
-      // Tòa 3
-      {type:'desk',x:63,y:1,w:10,h:2},{type:'desk',x:63,y:6,w:10,h:2},{type:'desk',x:63,y:12,w:10,h:2},{type:'desk',x:63,y:18,w:10,h:2},
-      {type:'desk',x:77,y:1,w:10,h:2},{type:'desk',x:77,y:6,w:10,h:2},{type:'desk',x:77,y:12,w:10,h:2},
-      // Cột hành lang giữa các tòa
-      {type:'pillar',x:28.5,y:8},{type:'pillar',x:28.5,y:24},{type:'pillar',x:59.5,y:8},{type:'pillar',x:59.5,y:24},
-      // Cầu thang
-      {type:'stair',x:1,y:28.5,w:5,h:3},{type:'stair',x:32,y:28.5,w:5,h:3},{type:'stair',x:63,y:28.5,w:5,h:3},
-    ],
-    rooms:[{x:0,y:0,w:28,h:32,label:'Tòa 1',c:'rgba(56,189,248,.04)'},{x:31,y:0,w:28,h:32,label:'Tòa 2',c:'rgba(56,189,248,.04)'},{x:62,y:0,w:28,h:32,label:'Tòa 3',c:'rgba(56,189,248,.04)'}],
-    walls:[{x:28,y:0,w:3,h:32},{x:59,y:0,w:3,h:32},{x:0,y:6,w:28,h:.5},{x:0,y:13,w:28,h:.5},{x:0,y:20,w:28,h:.5},{x:0,y:27,w:28,h:.5},{x:31,y:6,w:28,h:.5},{x:31,y:13,w:28,h:.5},{x:31,y:20,w:28,h:.5},{x:31,y:27,w:28,h:.5},{x:62,y:5,w:28,h:.5},{x:62,y:11,w:28,h:.5},{x:62,y:17,w:28,h:.5},{x:62,y:23,w:28,h:.5},{x:14,y:0,w:.5,h:28},{x:45,y:0,w:.5,h:28},{x:76,y:0,w:.5,h:28}],
-    aps:[{x:3,y:3},{x:7,y:3},{x:11,y:3},{x:18,y:3},{x:21,y:3},{x:25,y:3},{x:3,y:9.5},{x:7,y:9.5},{x:14,y:9.5},{x:21,y:9.5},{x:25,y:9.5},{x:3,y:16.5},{x:7,y:16.5},{x:14,y:16.5},{x:21,y:16.5},{x:25,y:16.5},{x:3,y:23.5},{x:7,y:23.5},{x:14,y:23.5},{x:21,y:23.5},{x:25,y:23.5},{x:34,y:3},{x:38,y:3},{x:45,y:3},{x:52,y:3},{x:56,y:3},{x:34,y:9.5},{x:38,y:9.5},{x:45,y:9.5},{x:52,y:9.5},{x:56,y:9.5},{x:34,y:16.5},{x:45,y:16.5},{x:52,y:16.5},{x:34,y:23.5},{x:45,y:23.5},{x:52,y:23.5},{x:56,y:23.5},{x:65,y:3},{x:69,y:3},{x:76,y:3},{x:83,y:3},{x:87,y:3},{x:65,y:9.5},{x:76,y:9.5},{x:83,y:9.5},{x:65,y:16.5},{x:76,y:16.5},{x:83,y:16.5},{x:65,y:23.5},{x:76,y:23.5},{x:83,y:23.5},{x:87,y:23.5}]}
-};
-
-const DS_INFO = {
-  HCXY:{meta:'1 tầng · 3600 m²',xmin:858.64,xmax:974.52,ymin:878.26,ymax:919.26},
-  SYL:{meta:'1 tầng · 2600 m²',xmin:19.63,xmax:82.43,ymin:1.45,ymax:30.55},
-  UJILIB3:{meta:'Tầng 3 · 308 m²',xmin:3.13,xmax:13.91,ymin:15.81,ymax:30.11},
-  UJILIB5:{meta:'Tầng 5 · 308 m²',xmin:3.13,xmax:13.91,ymin:15.81,ymax:30.11},
-  UJIDOORLOC:{meta:'3 tòa · 4–5 tầng',xmin:-7689.72,xmax:-7312.58,ymin:4864764.96,ymax:4865016.86}
-};
-
-function toFloor(ds,rx,ry){
-  const i=DS_INFO[ds],f=FLOORS[ds];if(!i||!f)return{fx:2,fy:2};
-  const xRange=i.xmax-i.xmin, yRange=i.ymax-i.ymin;
-  const scale=Math.min(f.W/xRange, f.H/yRange);
-  const offX=(f.W-xRange*scale)/2, offY=(f.H-yRange*scale)/2;
-  const fx=offX+(rx-i.xmin)*scale;
-  const fy=offY+(ry-i.ymin)*scale;
-  return{fx:Math.max(.5,Math.min(f.W-.5,fx)),
-         fy:Math.max(.5,Math.min(f.H-.5,fy))};
-}
-
-// Ngược lại: floor coords (fx,fy) → real coords (rx,ry)
-function fromFloor(ds,fx,fy){
-  const i=DS_INFO[ds],f=FLOORS[ds];if(!i||!f)return{rx:0,ry:0};
-  const xRange=i.xmax-i.xmin, yRange=i.ymax-i.ymin;
-  const scale=Math.min(f.W/xRange, f.H/yRange);
-  const offX=(f.W-xRange*scale)/2, offY=(f.H-yRange*scale)/2;
-  return{
-    rx: (fx-offX)/scale + i.xmin,
-    ry: (fy-offY)/scale + i.ymin
-  };
-}
-
-// Canvas pixel → real coords
-function canvasToReal(ds,cx,cy){
-  const f=FLOORS[ds];if(!f)return{rx:0,ry:0};
-  const s=getScale();
-  const fx=(cx-(canvas.width-f.W*s)/2)/s;
-  const fy=(cy-(canvas.height-f.H*s)/2)/s;
-  return fromFloor(ds,fx,fy);
-}
-
-// STATE
-let DATA=null,CUR='HCXY';
-let layers={true:true,gcn:true,dnn:true,err:true,ap:true,noise:true,cov:true,history:true};
-let noiseActive=false,noiseAPs=[];
-let hoverIdx=null; // index in sessionPts being hovered
-let sessionPts=[],selectedIdx=null;
-
-let animFrame=null,pulseT=0;
-let activeHistIdx=null; // which history item is highlighted
-
-const canvas=document.getElementById('floor'),ctx=canvas.getContext('2d');
-
-// LOAD
-async function loadPredictions(){
-  try{
-    const r=await fetch('predictions.json');if(!r.ok)throw 0;
-    DATA=await r.json();
-    document.getElementById('data-badge').textContent='✓ MODEL THẬT';
-    document.getElementById('data-badge').className='badge live';
-  }catch{
-    DATA=null;
-    document.getElementById('data-badge').textContent='⚠ KHÔNG CÓ JSON';
-    document.getElementById('data-badge').style.color='#ff4d6d';
-  }
-  initUI();startAnim();
-}
-
-function startAnim(){
-  function loop(t){pulseT=t;if(sessionPts.length>0)draw();animFrame=requestAnimationFrame(loop);}
-  animFrame=requestAnimationFrame(loop);
-}
-
-// INIT UI
-function initUI(){
-  const list=document.getElementById('ds-list');list.innerHTML='';
-  if(!DATA){list.innerHTML='<div style="font-size:9px;color:var(--tx3)">Không có dữ liệu</div>';return;}
-  const keys=Object.keys(DATA).filter(d=>FLOORS[d]);
-  if(!keys.length)return;
-  keys.forEach((ds,i)=>{
-    const info=DS_INFO[ds]||{meta:''};
-    const btn=document.createElement('button');
-    btn.className='ds-btn'+(i===0?' active':'');
-    btn.innerHTML=`<div class="ds-dot" style="background:${FLOORS[ds].color}"></div>
-      <div><div class="ds-name">${ds}</div>
-      <div class="ds-meta">${info.meta} · ${DATA[ds].n_points}pts</div></div>`;
-    btn.onclick=()=>{
-      document.querySelectorAll('.ds-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');CUR=ds;selectedIdx=null;sessionPts=[];noiseAPs=[];activeHistIdx=null;
-      populateSelect();updateMetrics();resetResultUI();renderHistory();resizeCanvas();
-    };
-    list.appendChild(btn);
-  });
-  CUR=keys[0];populateSelect();updateMetrics();resizeCanvas();
-}
-
-function populateSelect(){
-  const sel=document.getElementById('pt-select');
-  sel.innerHTML='<option value="">— chọn hoặc click mặt bằng —</option>';
-  if(!DATA||!DATA[CUR])return;
-  DATA[CUR].true_x.forEach((tx,i)=>{
-    const o=document.createElement('option');o.value=i;
-    o.textContent=`#${i+1}  (${Number(tx).toFixed(2)}, ${Number(DATA[CUR].true_y[i]).toFixed(2)})`;
-    sel.appendChild(o);
-  });
-  document.getElementById('btn-predict').disabled=true;
-}
-
-function updateMetrics(){
-  const d=DATA&&DATA[CUR];if(!d)return;
-  document.getElementById('sb-gcn').textContent=d.gcn_mean.toFixed(2);
-  document.getElementById('sb-dnn').textContent=d.dnn_mean.toFixed(2);
-  const mx=Math.max(d.gcn_mean,d.dnn_mean);
-  document.getElementById('bar-gcn').style.width=(d.gcn_mean/mx*100)+'%';
-  document.getElementById('bar-dnn').style.width=(d.dnn_mean/mx*100)+'%';
-  document.getElementById('err-dist').style.display='block';
-  document.getElementById('eb-gcn').textContent=d.gcn_mean.toFixed(3)+'m';
-  document.getElementById('eb-dnn').textContent=d.dnn_mean.toFixed(3)+'m';
-  document.getElementById('ef-gcn').style.width=(d.gcn_mean/mx*100)+'%';
-  document.getElementById('ef-dnn').style.width=(d.dnn_mean/mx*100)+'%';
-  document.getElementById('stats-overlay').className='stats-overlay show';
-  document.getElementById('so-ds').textContent=CUR;
-  document.getElementById('so-nap').textContent=d.n_ap;
-  document.getElementById('so-gcn').textContent=d.gcn_mean.toFixed(3)+'m';
-  document.getElementById('so-dnn').textContent=d.dnn_mean.toFixed(3)+'m';
-  document.getElementById('so-imp').textContent='+'+((1-d.gcn_mean/d.dnn_mean)*100).toFixed(1)+'%';
-}
-
-function onPointSelect(){
-  const sel=document.getElementById('pt-select');
-  selectedIdx=sel.value===''?null:parseInt(sel.value);
-  document.getElementById('btn-predict').disabled=(selectedIdx===null);
-  resetResultUI();
-  if(selectedIdx!==null)previewPoint(selectedIdx);
-}
-
-function pickRandom(){
-  if(!DATA||!DATA[CUR])return;
-  const i=Math.floor(Math.random()*DATA[CUR].true_x.length);
-  document.getElementById('pt-select').value=i;selectedIdx=i;
-  document.getElementById('btn-predict').disabled=false;
-  resetResultUI();previewPoint(i);
-}
-
-// Click on floor → find nearest AP → find test point nearest that AP → auto predict
-function onCanvasClick(e){
-  if(!DATA||!DATA[CUR])return;
-  const rect=canvas.getBoundingClientRect();
-  const scale = Math.min(canvas.width / rect.width, canvas.height / rect.height);
-
-  const mx = (e.clientX - rect.left) * scale;
-  const my = (e.clientY - rect.top) * scale;
-  const f=FLOORS[CUR];if(!f)return;
-
-  // Click → real coords
-  const{rx:clickRX,ry:clickRY}=canvasToReal(CUR,mx,my);
-  const info=DS_INFO[CUR];
-
-  // IDW nội suy từ K=5 điểm gần nhất
-  const dd=DATA[CUR],K=5;
-  const dists=dd.true_x.map((tx,i)=>({i,d:Math.hypot(tx-clickRX,dd.true_y[i]-clickRY)}));
-  dists.sort((a,b)=>a.d-b.d);
-  const nb=dists.slice(0,K);
-
-  // Nếu click rất gần điểm test thật → dùng luôn
-  if(nb[0].d<0.5){
-    selectedIdx=nb[0].i;
-    document.getElementById('pt-select').value=selectedIdx;
-    document.getElementById('btn-predict').disabled=false;
-    resetResultUI();
-    animClick(mx,my);
-    doPredict();
-    return;
-  }
-
-  // IDW weights = 1/d²
-  const ws=nb.map(n=>1/(n.d*n.d));
-  const wSum=ws.reduce((a,b)=>a+b,0);
-  const wn=ws.map(w=>w/wSum);
-
-  let gx=0,gy=0,dx=0,dy=0,ge=0,de=0;
-  nb.forEach(({i},j)=>{
-    gx+=wn[j]*dd.gcn_x[i]; gy+=wn[j]*dd.gcn_y[i];
-    dx+=wn[j]*dd.dnn_x[i]; dy+=wn[j]*dd.dnn_y[i];
-    ge+=wn[j]*dd.gcn_err[i]; de+=wn[j]*dd.dnn_err[i];
-  });
-
-  const{fx:tfx,fy:tfy}=toFloor(CUR,clickRX,clickRY);
-  const{fx:gfx,fy:gfy}=toFloor(CUR,gx,gy);
-  const{fx:dfx,fy:dfy}=toFloor(CUR,dx,dy);
-
-  // Nearest AP từ click
-  const ff=FLOORS[CUR];
-  const xR2=info.xmax-info.xmin,yR2=info.ymax-info.ymin;
-  const sc2=Math.min(ff.W/xR2,ff.H/yR2);
-  const ox2=(ff.W-xR2*sc2)/2,oy2=(ff.H-yR2*sc2)/2;
-  let nearAP=null,nearAPDist2=9999,nearAPRX=0,nearAPRY=0;
-  ff.aps.forEach(ap=>{
-    const apRX=(ap.x-ox2)/sc2+info.xmin, apRY=(ap.y-oy2)/sc2+info.ymin;
-    const d=Math.hypot(clickRX-apRX,clickRY-apRY);
-    if(d<nearAPDist2){nearAPDist2=d;nearAP=ap;nearAPRX=apRX;nearAPRY=apRY;}
-  });
-
-  sessionPts=sessionPts.map(p=>({...p,isActive:false}));
-  const pt={
-    true_fx:tfx,true_fy:tfy,gcn_fx:gfx,gcn_fy:gfy,dnn_fx:dfx,dnn_fy:dfy,
-    gcn_err:ge,dnn_err:de,gcn_err_raw:ge,dnn_err_raw:de,
-    idx:sessionPts.length,isActive:true,
-    tx:clickRX,ty:clickRY,gx,gy,dx,dy,
-    t0:Date.now(),virtual:true,
-    nearAP,nearAPRX,nearAPRY
-  };
-  sessionPts.push(pt);
-  activeHistIdx=sessionPts.length-1;
-  selectedIdx=null;
-
-  animClick(mx,my);
-  if(nearAP)animAP(nearAP);
-  updateAfterPredict(pt);
-}
-
-function animAP(ap){
-  let t=0;
-  const fn=()=>{
-    const a=Math.max(0,1-t/12),r=6+t*2;
-    ctx.save();ctx.beginPath();ctx.arc(pxf(ap.x),pyf(ap.y),r,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(251,191,36,${a})`;ctx.lineWidth=2;ctx.stroke();ctx.restore();
-    t++;if(t<13)requestAnimationFrame(fn);
-  };requestAnimationFrame(fn);
-}
-
-function animClick(mx,my){
-  let t=0;
-  const fn=()=>{
-    const a=Math.max(0,1-t/14);
-    ctx.save();
-    ctx.beginPath();ctx.arc(mx,my,8+t*3,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(255,255,255,${a*.8})`;ctx.lineWidth=1.5;ctx.stroke();
-    ctx.beginPath();ctx.arc(mx,my,3,0,Math.PI*2);
-    ctx.fillStyle=`rgba(255,255,255,${a})`;ctx.fill();
-    ctx.restore();t++;if(t<15)requestAnimationFrame(fn);
-  };requestAnimationFrame(fn);
-}
-
-function previewPoint(i){
-  if(!DATA||!DATA[CUR])return;
-  draw();
-  const{fx,fy}=toFloor(CUR,DATA[CUR].true_x[i],DATA[CUR].true_y[i]);
-  let t=0;
-  const fn=()=>{
-    const a=(Math.sin(t*.25)+1)*.5*.6;
-    ctx.save();ctx.beginPath();ctx.arc(pxf(fx),pyf(fy),13,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.lineWidth=2;ctx.stroke();ctx.restore();
-    t++;if(t<25)requestAnimationFrame(fn);else draw();
-  };requestAnimationFrame(fn);
-}
-
-function resetResultUI(){
-  document.getElementById('result-card').classList.remove('show');
-  document.getElementById('btn-reset').style.display='none';
-}
-
-// ── PREDICT ──
-function runPredict(){
-  if(selectedIdx===null||!DATA||!DATA[CUR])return;
-  const btn=document.getElementById('btn-predict');
-  btn.textContent='◈ DỰ ĐOÁN';btn.classList.add('running');
-  setTimeout(()=>{doPredict();btn.textContent='▶ CHẠY DỰ ĐOÁN';btn.classList.remove('running');},180);
-}
-
-function doPredict(){
-  const d=DATA[CUR],i=selectedIdx;
-  const tx=d.true_x[i],ty=d.true_y[i];
-  const gx=d.gcn_x[i],gy=d.gcn_y[i];
-  const dx=d.dnn_x[i],dy=d.dnn_y[i];
-  let ge=d.gcn_err?d.gcn_err[i]:Math.hypot(gx-tx,gy-ty);
-  let de=d.dnn_err?d.dnn_err[i]:Math.hypot(dx-tx,dy-ty);
-
-  const{fx:tfx,fy:tfy}=toFloor(CUR,tx,ty);
-  const{fx:gfx,fy:gfy}=toFloor(CUR,gx,gy);
-  const{fx:dfx,fy:dfy}=toFloor(CUR,dx,dy);
-
-  sessionPts=sessionPts.map(p=>({...p,isActive:false}));
-  const pt={true_fx:tfx,true_fy:tfy,gcn_fx:gfx,gcn_fy:gfy,dnn_fx:dfx,dnn_fy:dfy,
-    gcn_err:ge,dnn_err:de,gcn_err_raw:ge,dnn_err_raw:de,
-    idx:i,isActive:true,tx,ty,gx,gy,dx,dy,t0:Date.now(),virtual:false
-  };
-  sessionPts.push(pt);
-  activeHistIdx=sessionPts.length-1;
-
-  updateAfterPredict(pt);
-}
-
-function updateAfterPredict(pt){
-  const{tx,ty,gx,gy,dx,dy,gcn_err:ge,dnn_err:de}=pt;
-  // result card
-  document.getElementById('rc-true').textContent=`(${Number(tx).toFixed(2)}, ${Number(ty).toFixed(2)})`;
-  document.getElementById('rc-gcn').textContent=`(${Number(gx).toFixed(2)}, ${Number(gy).toFixed(2)})`;
-  document.getElementById('rc-dnn').textContent=`(${Number(dx).toFixed(2)}, ${Number(dy).toFixed(2)})`;
-  document.getElementById('rc-gcn-err').textContent=ge.toFixed(3)+'m';
-  document.getElementById('rc-dnn-err').textContent=de.toFixed(3)+'m';
-
-  const geArr=d.gcn_err||(d.gcn_x.map((_,j)=>Math.hypot(d.gcn_x[j]-d.true_x[j],d.gcn_y[j]-d.true_y[j])));
-  const deArr=d.dnn_err||(d.dnn_x.map((_,j)=>Math.hypot(d.dnn_x[j]-d.true_x[j],d.dnn_y[j]-d.true_y[j])));
-  const wr=Math.round(geArr.filter((_,j)=>geArr[j]<deArr[j]).length/geArr.length*100);
-  const wEl=document.getElementById('rc-winner');
-  if(ge<=de){
-    wEl.innerHTML=`<span class="winner-badge winner-gcn">✓ GCN gần hơn ${((1-ge/de)*100).toFixed(1)}%</span>
-      <div class="winner-note">GCN thắng <b style="color:var(--gcn)">${wr}%</b> tổng số điểm.<br>
-      TB toàn tập: GCN <b style="color:var(--gcn)">${d.gcn_mean.toFixed(3)}m</b> &lt; DNN <b style="color:var(--dnn)">${d.dnn_mean.toFixed(3)}m</b> ✓</div>`;
-  }else{
-    wEl.innerHTML=`<span class="winner-badge winner-dnn">DNN gần hơn tại điểm này</span>
-      <div class="winner-note">ⓘ Bình thường — DNN tốt hơn tại ${100-wr}% điểm riêng lẻ.<br>
-      Nhưng GCN thắng <b style="color:var(--gcn)">${wr}%</b> tổng số điểm.<br>
-      TB toàn tập: GCN <b style="color:var(--gcn)">${d.gcn_mean.toFixed(3)}m</b> &lt; DNN <b style="color:var(--dnn)">${d.dnn_mean.toFixed(3)}m</b> ✓</div>`;
-  }
-  document.getElementById('result-card').classList.add('show');
-  document.getElementById('btn-reset').style.display='block';
-
-  updateSessionStats();renderHistory();draw();
-}
-
-function updateSessionStats(){
-  const n=sessionPts.length;if(!n)return;
-  const avgG=(sessionPts.reduce((s,p)=>s+p.gcn_err,0)/n).toFixed(2);
-  const avgD=(sessionPts.reduce((s,p)=>s+p.dnn_err,0)/n).toFixed(2);
-  const wins=sessionPts.filter(p=>p.gcn_err<p.dnn_err).length;
-  document.getElementById('bb-n').textContent=n;
-  document.getElementById('bb-gcn').textContent=avgG;
-  document.getElementById('bb-dnn').textContent=avgD;
-  document.getElementById('bb-ds').textContent=CUR;
-  document.getElementById('bb-hint').textContent=`GCN thắng ${wins}/${n} điểm · TB: GCN ${DATA[CUR].gcn_mean.toFixed(3)}m < DNN ${DATA[CUR].dnn_mean.toFixed(3)}m ✓`;
-  document.getElementById('bb-hist-btn').style.display='flex';
-  document.getElementById('sess-stats').style.display='grid';
-  document.getElementById('ss-gcn-avg').textContent=avgG+'m';
-  document.getElementById('ss-dnn-avg').textContent=avgD+'m';
-  document.getElementById('ss-win-rate').textContent=Math.round(wins/n*100)+'%';
-}
-
-// ── HISTORY PANEL ──
-function renderHistory(){
-  // Update count badge
-  document.getElementById('hist-count').textContent=sessionPts.length;
-
-  // Render table in results tab
-  const wrap=document.getElementById('hist-table-wrap');
-  const tbody=document.getElementById('hist-tbody');
-  if(!wrap||!tbody)return;
-
-  if(!sessionPts.length){
-    wrap.style.display='none';return;
-  }
-  wrap.style.display='block';
-  tbody.innerHTML='';
-
-  [...sessionPts].reverse().forEach((pt,ri)=>{
-    const realIdx=sessionPts.length-1-ri;
-    const gcnWins=pt.gcn_err<pt.dnn_err;
-    const tr=document.createElement('tr');
-    tr.style.cursor='pointer';
-    if(realIdx===activeHistIdx)tr.style.background='rgba(0,255,163,.05)';
-    tr.innerHTML=`
-      <td style="font-family:'JetBrains Mono',monospace;color:var(--tx3);font-size:10px">#${pt.idx+1}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:10px">(${Number(pt.tx).toFixed(2)}, ${Number(pt.ty).toFixed(2)})</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gcn)">(${Number(pt.gx).toFixed(2)}, ${Number(pt.gy).toFixed(2)})</td>
-      <td class="tgcn" style="font-size:11px">${pt.gcn_err.toFixed(3)} m</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dnn)">(${Number(pt.dx).toFixed(2)}, ${Number(pt.dy).toFixed(2)})</td>
-      <td class="tdnn" style="font-size:11px">${pt.dnn_err.toFixed(3)} m</td>
-      <td><span class="timp" style="background:${gcnWins?'rgba(0,255,163,.1)':'rgba(77,158,255,.1)'};color:${gcnWins?'var(--gcn)':'var(--dnn)'}; font-size:9px">${gcnWins?'✓ GCN':'✓ DNN'}</span></td>`;
-    tr.onclick=()=>{ switchTab('sim',document.querySelector('.tab'));highlightPt(realIdx); };
-    tbody.appendChild(tr);
-  });
-
-  // Summary row
-  if(sessionPts.length>0){
-    const avgG=(sessionPts.reduce((s,p)=>s+p.gcn_err,0)/sessionPts.length).toFixed(3);
-    const avgD=(sessionPts.reduce((s,p)=>s+p.dnn_err,0)/sessionPts.length).toFixed(3);
-    const wins=sessionPts.filter(p=>p.gcn_err<p.dnn_err).length;
-    const sumEl=document.getElementById('hist-summary');
-    if(sumEl){
-      sumEl.style.display='flex';
-      document.getElementById('hs-gcn').textContent=avgG+'m';
-      document.getElementById('hs-dnn').textContent=avgD+'m';
-      document.getElementById('hs-win').textContent=`${wins}/${sessionPts.length} (${Math.round(wins/sessionPts.length*100)}%)`;
-    }
-  }
-}
-
-function highlightPt(idx){
-  activeHistIdx=idx;
-  sessionPts=sessionPts.map((p,i)=>({...p,isActive:i===idx}));
-  const pt=sessionPts[idx];
-  // Update result card to show this point
-  document.getElementById('rc-true').textContent=`(${Number(pt.tx).toFixed(2)}, ${Number(pt.ty).toFixed(2)})`;
-  document.getElementById('rc-gcn').textContent=`(${Number(pt.gx).toFixed(2)}, ${Number(pt.gy).toFixed(2)})`;
-  document.getElementById('rc-dnn').textContent=`(${Number(pt.dx).toFixed(2)}, ${Number(pt.dy).toFixed(2)})`;
-  document.getElementById('rc-gcn-err').textContent=pt.gcn_err.toFixed(3)+'m'+(pt.noised?' 🔴':'');
-  document.getElementById('rc-dnn-err').textContent=pt.dnn_err.toFixed(3)+'m'+(pt.noised?' 🔴':'');
-  document.getElementById('result-card').classList.add('show');
-  renderHistory();draw();
-}
-
-function resetAll(){
-  sessionPts=[];selectedIdx=null;activeHistIdx=null;noiseAPs=[];
-  document.getElementById('pt-select').value='';
-  document.getElementById('btn-predict').disabled=true;
-  document.getElementById('bb-n').textContent='0';
-  document.getElementById('bb-gcn').textContent='—';
-  document.getElementById('bb-dnn').textContent='—';
-  document.getElementById('bb-hint').textContent='← Click mặt bằng hoặc chọn dropdown';
-  document.getElementById('bb-hist-btn').style.display='none';
-  document.getElementById('sess-stats').style.display='none';
-  resetResultUI();renderHistory();draw();
-}
-
-// AP noise feature removed — dữ liệu 100% từ predictions.json
-
-// AP NOISE — chỉ visual, sai số KHÔNG thay đổi (100% từ predictions.json)
-function onNoiseChange(){
-  const cnt=document.getElementById('sl-cnt').value;
-  const str=document.getElementById('sl-str').value;
-  document.getElementById('val-cnt').textContent=cnt;
-  document.getElementById('val-str').textContent=str+'×';
-  if(noiseActive)genNoiseAPs();
-}
-
-function genNoiseAPs(){
-  const f=FLOORS[CUR];if(!f)return;
-  const cnt=+document.getElementById('sl-cnt').value;
-  const str=+document.getElementById('sl-str').value;
-  noiseAPs=[];
-  // Rải đều: mỗi AP nhiễu đặt GẦN 1 AP thật khác nhau (trải khắp mặt bằng)
-  const nReal=f.aps.length;
-  // Chọn cnt AP thật cách đều nhau để đặt AP nhiễu gần đó
-  const step=nReal/cnt;
-  const spread=str*0.7; // gần AP thật để RSSI tương tự
-  for(let i=0;i<cnt;i++){
-    const refIdx=Math.round(i*step)%nReal;
-    const ref=f.aps[refIdx];
-    noiseAPs.push({
-      x:Math.max(1,Math.min(f.W-1, ref.x+(Math.random()-.5)*spread*2)),
-      y:Math.max(1,Math.min(f.H-1, ref.y+(Math.random()-.5)*spread*2)),
-      label:'N'+(i+1)
-    });
-  }
-  const ns=document.getElementById('noise-status');
-  ns.style.display=cnt>0?'block':'none';
-  if(cnt>0) ns.textContent=cnt+' AP giả rải đều gần AP thật (RSSI≈-'+(60+str*5)+'dBm)';
-  draw();
-}
-
-function toggleNoise(){
-  noiseActive=!noiseActive;
-  const btn=document.getElementById('btn-noise');
-  if(noiseActive){
-    btn.textContent='⏹ Ẩn AP nhiễu';
-    btn.style.background='rgba(255,77,109,.12)';
-    btn.style.borderColor='rgba(255,77,109,.5)';
-    btn.style.color='var(--noise)';
-    genNoiseAPs();
-  }else{
-    btn.textContent='⚡ Hiện AP nhiễu';
-    btn.style.background='var(--surf)';
-    btn.style.borderColor='var(--bdr)';
-    btn.style.color='var(--tx3)';
-    noiseAPs=[];
-    document.getElementById('noise-status').style.display='none';
-    draw();
-  }
-}
-
-// CANVAS HELPERS
-function getScale(){const f=FLOORS[CUR],p=24;return Math.min((canvas.width-p*2)/f.W,(canvas.height-p*2)/f.H);}
-function pxf(x){const f=FLOORS[CUR],s=getScale();return(canvas.width-f.W*s)/2+x*s;}
-function pyf(y){const f=FLOORS[CUR],s=getScale();return(canvas.height-f.H*s)/2+y*s;}
-const px=pxf,py=pyf;
-
-// DRAW
-function draw(){
-  const f=FLOORS[CUR];if(!f)return;
-  const s=getScale(),t=pulseT*.001;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Floor
-  ctx.fillStyle='#0c1120';ctx.beginPath();ctx.roundRect(px(0),py(0),f.W*s,f.H*s,8);ctx.fill();
-
-  // Grid
-  ctx.strokeStyle='rgba(56,189,248,.04)';ctx.lineWidth=.5;
-  for(let x=0;x<=f.W;x+=4){ctx.beginPath();ctx.moveTo(px(x),py(0));ctx.lineTo(px(x),py(f.H));ctx.stroke();}
-  for(let y=0;y<=f.H;y+=4){ctx.beginPath();ctx.moveTo(px(0),py(y));ctx.lineTo(px(f.W),py(y));ctx.stroke();}
-
-  // Coverage
-  if(layers.cov){
-    for(const ap of f.aps){
-      const cx=px(ap.x),cy=py(ap.y),r=s*7;
-      const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-      g.addColorStop(0,'rgba(251,191,36,.05)');g.addColorStop(1,'rgba(251,191,36,0)');
-      ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-    }
-  }
-
-  // Rooms
-  for(const r of f.rooms){
-    ctx.fillStyle=r.c;ctx.fillRect(px(r.x),py(r.y),r.w*s,r.h*s);
-    if(r.w*s>34&&r.h*s>14){
-      ctx.fillStyle='rgba(200,220,255,.1)';ctx.font=`${Math.max(7,Math.min(9,r.w*s/9))}px Outfit`;
-      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(r.label,px(r.x)+r.w*s/2,py(r.y)+r.h*s/2);
-    }
-  }
-  // Walls
-  ctx.fillStyle='#1a2540';
-  for(const w of f.walls)ctx.fillRect(px(w.x),py(w.y),Math.max(2,w.w*s),Math.max(2,w.h*s));
-
-  // Furniture
-  if(f.furniture&&s>3){
-    for(const obj of f.furniture){
-      const ox=px(obj.x),oy=py(obj.y);
-      if(obj.type==='desk'||obj.type==='table'){
-        const ow=obj.w*s,oh=obj.h*s;
-        ctx.fillStyle=obj.type==='table'?'rgba(180,150,80,.18)':'rgba(100,140,200,.14)';
-        ctx.strokeStyle=obj.type==='table'?'rgba(180,150,80,.45)':'rgba(100,140,200,.4)';
-        ctx.lineWidth=.8;ctx.beginPath();ctx.roundRect(ox,oy,ow,oh,1.5);ctx.fill();ctx.stroke();
-        // Legs
-        if(s>8){
-          ctx.fillStyle='rgba(255,255,255,.12)';
-          const lg=1.5;
-          ctx.fillRect(ox+lg,oy+lg,lg,lg);ctx.fillRect(ox+ow-lg*2,oy+lg,lg,lg);
-          ctx.fillRect(ox+lg,oy+oh-lg*2,lg,lg);ctx.fillRect(ox+ow-lg*2,oy+oh-lg*2,lg,lg);
+        async function loadPredictions() {
+            try {
+                const response = await fetch('predictions.json?v=' + Date.now());
+                if (!response.ok) throw new Error('Network response was not ok');
+                allData = await response.json();
+                console.log('✅ Loaded datasets:', Object.keys(allData));
+                loadDataset();
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').innerHTML = '❌ Không thể tải predictions.json<br>Chắc chắn file đã tồn tại?';
+            }
         }
-      }else if(obj.type==='chair'){
-        const r2=s*0.9;
-        ctx.fillStyle='rgba(80,120,180,.2)';ctx.strokeStyle='rgba(80,120,180,.5)';ctx.lineWidth=.7;
-        ctx.beginPath();ctx.arc(ox,oy,r2,0,Math.PI*2);ctx.fill();ctx.stroke();
-        // Backrest
-        if(s>10){ctx.strokeStyle='rgba(80,120,180,.35)';ctx.lineWidth=.5;ctx.beginPath();ctx.arc(ox,oy-r2*.3,r2*.7,Math.PI,0);ctx.stroke();}
-      }else if(obj.type==='board'){
-        ctx.fillStyle='rgba(50,200,150,.12)';ctx.strokeStyle='rgba(50,200,150,.5)';ctx.lineWidth=1;
-        ctx.fillRect(ox,oy,obj.w*s,obj.h*s);ctx.strokeRect(ox,oy,obj.w*s,obj.h*s);
-        if(s>12){
-          ctx.fillStyle='rgba(50,200,150,.3)';ctx.font=`${Math.min(8,obj.w*s/6)}px JetBrains Mono`;
-          ctx.textAlign='center';ctx.textBaseline='middle';
-          ctx.fillText('BOARD',ox+obj.w*s/2,oy+obj.h*s/2);
+
+        function loadDataset() {
+            currentDataset = document.getElementById('datasetSelect').value;
+            currentSampleIndex = 0;
+
+            if (!allData[currentDataset]) {
+                alert(`⚠️ Dataset không có: ${currentDataset}`);
+                return;
+            }
+
+            document.getElementById('datasetName').textContent = currentDataset;
+            document.getElementById('numSamples').textContent =
+                allData[currentDataset].num_samples.toLocaleString();
+
+            randomizeSample();
+            updateCharts();
         }
-      }else if(obj.type==='rack'){
-        ctx.fillStyle='rgba(150,100,200,.12)';ctx.strokeStyle='rgba(150,100,200,.4)';ctx.lineWidth=.8;
-        ctx.fillRect(ox,oy,obj.w*s,obj.h*s);ctx.strokeRect(ox,oy,obj.w*s,obj.h*s);
-        if(s>8){
-          ctx.strokeStyle='rgba(150,100,200,.2)';ctx.lineWidth=.5;
-          for(let ri=1;ri<5;ri++){const ry=oy+ri*obj.h*s/5;ctx.beginPath();ctx.moveTo(ox,ry);ctx.lineTo(ox+obj.w*s,ry);ctx.stroke();}
+
+        function randomizeSample() {
+            const dataset = allData[currentDataset];
+            currentSampleIndex = Math.floor(Math.random() * dataset.num_samples);
+            drawMap();
+            updateStats();
         }
-      }else if(obj.type==='pillar'){
-        const pr=s*.8;
-        ctx.fillStyle='#2a3550';ctx.strokeStyle='rgba(100,140,200,.4)';ctx.lineWidth=1;
-        ctx.beginPath();ctx.arc(ox,oy,pr,0,Math.PI*2);ctx.fill();ctx.stroke();
-      }else if(obj.type==='door'){
-        // Door arc
-        ctx.strokeStyle='rgba(56,189,248,.6)';ctx.lineWidth=1.2;ctx.setLineDash([]);
-        ctx.beginPath();ctx.moveTo(ox,oy);
-        ctx.lineTo(ox+obj.w*s,oy);
-        // Door swing arc
-        ctx.beginPath();ctx.arc(ox,oy,obj.w*s*.6,0,Math.PI/2);ctx.stroke();
-      }else if(obj.type==='stair'){
-        ctx.fillStyle='rgba(100,160,200,.08)';ctx.strokeStyle='rgba(100,160,200,.3)';ctx.lineWidth=.8;
-        ctx.fillRect(ox,oy,obj.w*s,obj.h*s);ctx.strokeRect(ox,oy,obj.w*s,obj.h*s);
-        if(s>8){
-          const steps=4;ctx.strokeStyle='rgba(100,160,200,.2)';ctx.lineWidth=.5;
-          for(let si=1;si<steps;si++){const sy=oy+si*obj.h*s/steps;ctx.beginPath();ctx.moveTo(ox,sy);ctx.lineTo(ox+obj.w*s,sy);ctx.stroke();}
+
+        function drawMap() {
+            const canvas = document.getElementById('mapCanvas');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const dataset = allData[currentDataset];
+            const groundTruth = dataset.ground_truth[currentSampleIndex];
+
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const padding = 60;
+            const scale = Math.min(canvasWidth, canvasHeight) - 2 * padding;
+
+            // Normalize to 0-1000 range
+            const toCanvas = (coord) => [
+                (coord[0] / 1000) * scale + padding,
+                (coord[1] / 1000) * scale + padding
+            ];
+
+            // Background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            // Grid
+            ctx.strokeStyle = '#1a3a3a';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const pos = (i / 10) * scale + padding;
+                ctx.beginPath();
+                ctx.moveTo(pos, padding);
+                ctx.lineTo(pos, canvasHeight - padding);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(padding, pos);
+                ctx.lineTo(canvasWidth - padding, pos);
+                ctx.stroke();
+            }
+
+            const truePt = toCanvas(groundTruth);
+            const models = dataset.models;
+
+            // Draw predictions
+            if (models.GCN && models.GCN.predictions[currentSampleIndex]) {
+                const gcnPt = toCanvas(models.GCN.predictions[currentSampleIndex]);
+                drawCircle(ctx, gcnPt[0], gcnPt[1], 8, '#00ff99');
+                drawLine(ctx, truePt, gcnPt, '#00ff99');
+            }
+
+            if (models.DNN && models.DNN.predictions[currentSampleIndex]) {
+                const dnnPt = toCanvas(models.DNN.predictions[currentSampleIndex]);
+                drawCircle(ctx, dnnPt[0], dnnPt[1], 8, '#ff6b6b');
+                drawLine(ctx, truePt, dnnPt, '#ff6b6b');
+            }
+
+            if (models.Hybrid && models.Hybrid.predictions[currentSampleIndex]) {
+                const hybridPt = toCanvas(models.Hybrid.predictions[currentSampleIndex]);
+                drawCircle(ctx, hybridPt[0], hybridPt[1], 8, '#ffd93d');
+                drawLine(ctx, truePt, hybridPt, '#ffd93d');
+            }
+
+            // Ground truth - star
+            drawStar(ctx, truePt[0], truePt[1], 12, '#fff');
         }
-      }
-    }
-  }
 
-  // Border
-  ctx.shadowColor='rgba(56,189,248,.18)';ctx.shadowBlur=10;
-  ctx.strokeStyle='rgba(56,189,248,.3)';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.roundRect(px(0),py(0),f.W*s,f.H*s,8);ctx.stroke();ctx.shadowBlur=0;
+        function drawStar(ctx, x, y, size, color) {
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < 10; i++) {
+                const angle = (i * Math.PI) / 5;
+                const r = i % 2 === 0 ? size : size / 2;
+                const px = x + r * Math.cos(angle - Math.PI / 2);
+                const py = y + r * Math.sin(angle - Math.PI / 2);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
 
-  // Scale bar
-  const bx=px(0)+8,by=py(f.H)+10,bl=5*s;
-  ctx.strokeStyle='rgba(150,180,220,.3)';ctx.lineWidth=1.2;
-  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+bl,by);ctx.stroke();
-  ctx.fillStyle='rgba(150,180,220,.45)';ctx.font='8px JetBrains Mono';
-  ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('5m',bx+bl/2,by+2);
+        function drawCircle(ctx, x, y, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
-  // Label
-  ctx.fillStyle=f.color;ctx.font='bold 10px JetBrains Mono';
-  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(CUR,px(0)+7,py(0)+6);
+        function drawLine(ctx, from, to, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(from[0], from[1]);
+            ctx.lineTo(to[0], to[1]);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.setLineDash([]);
+        }
 
-  // AP dots
-  if(layers.ap){
-    for(const ap of f.aps){
-      const cx=px(ap.x),cy=py(ap.y);
-      const pr=10+Math.sin(t*2+ap.x*.5)*2;
-      const pg=ctx.createRadialGradient(cx,cy,0,cx,cy,pr);
-      pg.addColorStop(0,'rgba(251,191,36,.16)');pg.addColorStop(1,'rgba(251,191,36,0)');
-      ctx.fillStyle=pg;ctx.beginPath();ctx.arc(cx,cy,pr,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#fbbf24';ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=.5;
-      ctx.beginPath();ctx.roundRect(cx-4,cy-4,8,8,2);ctx.fill();ctx.stroke();
-      ctx.fillStyle='#000';ctx.font='bold 5px JetBrains Mono';
-      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('AP',cx,cy);
-    }
-  }
+        function updateStats() {
+            const dataset = allData[currentDataset];
+            const models = dataset.models;
+            const gt = dataset.ground_truth[currentSampleIndex];
 
-  // Nearest AP indicator (for active point)
-  if(sessionPts.length>0){
-    const actP=sessionPts.find(p=>p.isActive);
-    if(actP){
-      const info=DS_INFO[CUR],ff=FLOORS[CUR];
-      // Dùng nearAP đã tính sẵn (virtual) hoặc tính lại (real)
-      let nearAP=actP.nearAP||null,nearAPRX=actP.nearAPRX||0,nearAPRY=actP.nearAPRY||0;
-      if(!nearAP){
-        const xRng=info.xmax-info.xmin,yRng=info.ymax-info.ymin;
-        const scl=Math.min(ff.W/xRng,ff.H/yRng);
-        const oxU=(ff.W-xRng*scl)/2,oyU=(ff.H-yRng*scl)/2;
-        let nearDist=9999;
-        ff.aps.forEach(ap=>{
-          const apRX=(ap.x-oxU)/scl+info.xmin;
-          const apRY=(ap.y-oyU)/scl+info.ymin;
-          const d=Math.hypot(actP.tx-apRX,actP.ty-apRY);
-          if(d<nearDist){nearDist=d;nearAP=ap;nearAPRX=apRX;nearAPRY=apRY;}
-        });
-      }
-      if(nearAP&&layers.ap){
-        // Convert AP real coords → canvas via toFloor (same system as test points)
-        const{fx:apFX,fy:apFY}=toFloor(CUR,nearAPRX,nearAPRY);
-        const nx=pxf(apFX),ny=pyf(apFY);
-        const tx2=px(actP.true_fx),ty2=py(actP.true_fy);
-        // Dashed line from true pos → nearest AP
-        ctx.strokeStyle='rgba(0,255,163,.4)';ctx.lineWidth=1.2;ctx.setLineDash([4,3]);
-        ctx.beginPath();ctx.moveTo(tx2,ty2);ctx.lineTo(nx,ny);ctx.stroke();ctx.setLineDash([]);
-        // Ring highlight on nearest AP
-        ctx.beginPath();ctx.arc(nx,ny,10,0,Math.PI*2);
-        ctx.strokeStyle='rgba(0,255,163,.8)';ctx.lineWidth=1.8;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);
-        // Label
-        ctx.fillStyle='rgba(0,255,163,.9)';ctx.font='bold 8px JetBrains Mono';
-        ctx.textAlign='center';ctx.textBaseline='bottom';
-        ctx.fillText('AP gần nhất',nx,ny-12);
-      }
-    }
-  }
+            document.getElementById('currentPos').textContent =
+                `(${gt[0].toFixed(0)}, ${gt[1].toFixed(0)})`;
 
+            ['GCN', 'DNN', 'Hybrid'].forEach(model => {
+                if (models[model]) {
+                    const error = models[model].errors[currentSampleIndex];
+                    const bar = document.getElementById(model.toLowerCase() + 'ErrorBar');
+                    const maxError = 20;
+                    bar.style.width = Math.min((error / maxError) * 100, 100) + '%';
+                    bar.textContent = error.toFixed(3) + ' m';
+                }
+            });
+        }
 
+        function updateCharts() {
+            const dataset = allData[currentDataset];
+            const models = dataset.models;
 
-  // All test points (non-active, shown as small markers)
-  if(layers.history&&sessionPts.length>0){
-    sessionPts.forEach((pt,pi)=>{
-      if(pt.isActive)return;
-      const gcnWon=pt.gcn_err<pt.dnn_err;
-      const cx=px(pt.true_fx),cy=py(pt.true_fy);
-      ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);
-      ctx.fillStyle=gcnWon?'rgba(0,255,163,.4)':'rgba(77,158,255,.4)';ctx.fill();
-      ctx.strokeStyle=gcnWon?'rgba(0,255,163,.6)':'rgba(77,158,255,.6)';ctx.lineWidth=.8;ctx.stroke();
-    });
-  }
+            updateErrorHistogram(models);
+            updateAccuracyChart(models);
+        }
 
-  // Noise APs — visual only, không ảnh hưởng sai số
-  if(layers.noise && noiseAPs.length>0){
-    for(const ap of noiseAPs){
-      const cx=px(ap.x),cy=py(ap.y);
-      const hg=ctx.createRadialGradient(cx,cy,0,cx,cy,18);
-      hg.addColorStop(0,'rgba(255,77,109,.2)');hg.addColorStop(1,'rgba(255,77,109,0)');
-      ctx.fillStyle=hg;ctx.beginPath();ctx.arc(cx,cy,18,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#ff4d6d';ctx.strokeStyle='rgba(255,50,80,.8)';ctx.lineWidth=1;
-      ctx.setLineDash([2,2]);ctx.beginPath();ctx.roundRect(cx-4,cy-4,8,8,2);ctx.fill();ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='#fff';ctx.font='bold 6px JetBrains Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('~',cx,cy);
-      ctx.fillStyle='rgba(255,77,109,.75)';ctx.font='7px JetBrains Mono';ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText(ap.label,cx+5,cy-2);
-    }
-  }
+        function updateErrorHistogram(models) {
+            const canvas = document.getElementById('errorHistogram');
+            const ctx = canvas.getContext('2d');
 
-  if(!sessionPts.length){
-    ctx.fillStyle='rgba(100,130,180,.22)';ctx.font='11px Outfit';
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('Click trực tiếp lên mặt bằng để chọn điểm test',px(f.W/2),py(f.H/2));
-    return;
-  }
+            const datasets = [];
+            const colors = { GCN: '#00ff99', DNN: '#ff6b6b', Hybrid: '#ffd93d' };
 
-  // Active point
-  const actPt=sessionPts.find(p=>p.isActive);
-  if(actPt){
-    const pt=actPt,age=(Date.now()-pt.t0)/1000;
+            for (const [model, data] of Object.entries(models)) {
+                const histogram = new Array(10).fill(0);
+                for (const error of data.errors) {
+                    const bin = Math.floor(error / 2);
+                    if (bin < 10) histogram[bin]++;
+                }
+                datasets.push({
+                    label: model,
+                    data: histogram,
+                    backgroundColor: colors[model],
+                    borderColor: colors[model],
+                    borderWidth: 2
+                });
+            }
 
-    // Error lines — dashed với màu rõ hơn
-    if(layers.err){
-      // DNN line first (behind GCN)
-      if(layers.dnn){
-        ctx.setLineDash([4,3]);
-        ctx.strokeStyle='rgba(77,158,255,.55)';ctx.lineWidth=1.8;
-        ctx.beginPath();ctx.moveTo(px(pt.true_fx),py(pt.true_fy));ctx.lineTo(px(pt.dnn_fx),py(pt.dnn_fy));ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      if(layers.gcn){
-        ctx.setLineDash([4,3]);
-        ctx.strokeStyle='rgba(0,255,163,.6)';ctx.lineWidth=1.8;
-        ctx.beginPath();ctx.moveTo(px(pt.true_fx),py(pt.true_fy));ctx.lineTo(px(pt.gcn_fx),py(pt.gcn_fy));ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
+            if (errorHistogramChart) errorHistogramChart.destroy();
 
-    // DNN point
-    if(layers.dnn){
-      const dc=px(pt.dnn_fx),dy2=py(pt.dnn_fy);
-      ctx.setLineDash([2,2]);
-      ctx.beginPath();ctx.arc(dc,dy2,6,0,Math.PI*2);
-      ctx.fillStyle='rgba(77,158,255,.15)';ctx.fill();
-      ctx.strokeStyle='#4d9eff';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
-      if(layers.err){
-        // Label: always BELOW DNN point with leader line
-        const lblX=dc, lblY=dy2+20;
-        ctx.strokeStyle='rgba(77,158,255,.4)';ctx.lineWidth=.8;
-        ctx.beginPath();ctx.moveTo(dc,dy2+7);ctx.lineTo(lblX,lblY-4);ctx.stroke();
-        // bg pill
-        const txt=`DNN  ${pt.dnn_err.toFixed(2)}m`;
-        ctx.font='bold 9px JetBrains Mono';
-        const tw=ctx.measureText(txt).width+10;
-        ctx.fillStyle='rgba(10,16,36,.85)';ctx.strokeStyle='rgba(77,158,255,.6)';ctx.lineWidth=.8;
-        ctx.beginPath();ctx.roundRect(lblX-tw/2,lblY-6,tw,13,4);ctx.fill();ctx.stroke();
-        ctx.fillStyle='#4d9eff';ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText(txt,lblX,lblY);
-      }
-    }
+            errorHistogramChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-2m', '2-4m', '4-6m', '6-8m', '8-10m', '10-12m', '12-14m', '14-16m', '16-18m', '18-20m'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#fff', font: { size: 12, weight: 'bold' } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#fff' }, grid: { color: '#333' } },
+                        y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
+                    }
+                }
+            });
+        }
 
-    // GCN point
-    if(layers.gcn){
-      const gc=px(pt.gcn_fx),gy2=py(pt.gcn_fy);
-      ctx.shadowColor='rgba(0,255,163,.35)';ctx.shadowBlur=8;
-      ctx.beginPath();ctx.arc(gc,gy2,6,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,255,163,.15)';ctx.fill();
-      ctx.strokeStyle='#00ffa3';ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
-      if(layers.err){
-        // Label: always ABOVE GCN point with leader line
-        const lblX=gc, lblY=gy2-20;
-        ctx.strokeStyle='rgba(0,255,163,.4)';ctx.lineWidth=.8;
-        ctx.beginPath();ctx.moveTo(gc,gy2-7);ctx.lineTo(lblX,lblY+4);ctx.stroke();
-        // bg pill
-        const txt=`GCN  ${pt.gcn_err.toFixed(2)}m`;
-        ctx.font='bold 9px JetBrains Mono';
-        const tw=ctx.measureText(txt).width+10;
-        ctx.fillStyle='rgba(10,16,36,.85)';ctx.strokeStyle='rgba(0,255,163,.6)';ctx.lineWidth=.8;
-        ctx.beginPath();ctx.roundRect(lblX-tw/2,lblY-6,tw,13,4);ctx.fill();ctx.stroke();
-        ctx.fillStyle='#00ffa3';ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText(txt,lblX,lblY);
-      }
-    }
+        function updateAccuracyChart(models) {
+            const canvas = document.getElementById('accuracyChart');
+            const ctx = canvas.getContext('2d');
 
-    // True position + detailed labels
-    if(layers.true){
-      const cx=px(pt.true_fx),cy2=py(pt.true_fy);
-      if(age<2){
-        const pr=13+age*18,pa=Math.max(0,(1-age*.5)*.4);
-        ctx.beginPath();ctx.arc(cx,cy2,pr,0,Math.PI*2);
-        ctx.strokeStyle=`rgba(255,255,255,${pa})`;ctx.lineWidth=1.5;ctx.stroke();
-      }
-      ctx.beginPath();ctx.arc(cx,cy2,10,0,Math.PI*2);
-      ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=2;ctx.stroke();
-      ctx.beginPath();ctx.arc(cx,cy2,7,0,Math.PI*2);
-      ctx.fillStyle='#fff';ctx.fill();
-      ctx.strokeStyle='#00ffa3';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#050810';ctx.font='bold 8px JetBrains Mono';
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(pt.virtual?'✦':(pt.idx+1),cx,cy2);
+            const modelNames = [];
+            const acc2m = [];
+            const acc5m = [];
+            const colors = [];
 
-      // === ANNOTATION PANEL — chỉ hiện khi hover ===
-      // Panel vẽ trong section hover bên dưới
-    }
-  }
+            for (const [model, data] of Object.entries(models)) {
+                modelNames.push(model);
+                acc2m.push(data.accuracy_2m);
+                acc5m.push(data.accuracy_5m);
+                colors.push({ 'GCN': '#00ff99', 'DNN': '#ff6b6b', 'Hybrid': '#ffd93d' }[model]);
+            }
 
-  // === HOVER ANNOTATION PANEL ===
-  if(hoverIdx!==null && hoverIdx<sessionPts.length){
-    const pt=sessionPts[hoverIdx];
-    const cx=px(pt.true_fx), cy2=py(pt.true_fy);
-    const gcnWins=pt.gcn_err<pt.dnn_err;
-    const panelW=214, panelH=122;
-    // Dịch panel sang phải nhiều hơn, tránh che điểm
-    let panelX=cx+28, panelY=cy2-panelH/2;
-    if(panelX+panelW>canvas.width-6) panelX=cx-panelW-28;
-    if(panelX<4) panelX=4;
-    if(panelY<6) panelY=6;
-    if(panelY+panelH>canvas.height-6) panelY=canvas.height-panelH-6;
+            if (accuracyChartInstance) accuracyChartInstance.destroy();
 
-    ctx.save();
-    // Shadow
-    ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=14;
-    ctx.fillStyle='rgba(6,10,22,.94)';
-    ctx.strokeStyle=gcnWins?'rgba(0,255,163,.5)':'rgba(77,158,255,.5)';
-    ctx.lineWidth=1.2;
-    ctx.beginPath();ctx.roundRect(panelX,panelY,panelW,panelH,8);ctx.fill();ctx.stroke();
-    ctx.shadowBlur=0;
+            accuracyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: modelNames,
+                    datasets: [
+                        {
+                            label: 'Accuracy < 2m (%)',
+                            data: acc2m,
+                            backgroundColor: colors,
+                            borderColor: colors,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Accuracy < 5m (%)',
+                            data: acc5m,
+                            backgroundColor: colors.map(c => c + '40'),
+                            borderColor: colors,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { labels: { color: '#fff', font: { size: 12, weight: 'bold' } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#fff' }, grid: { color: '#333' }, max: 100 },
+                        y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
+                    }
+                }
+            });
+        }
 
-    // Top accent bar
-    const accentColor=gcnWins?'rgba(0,255,163,.15)':'rgba(77,158,255,.15)';
-    ctx.fillStyle=accentColor;
-    ctx.beginPath();ctx.roundRect(panelX,panelY,panelW,20,{upperLeft:8,upperRight:8,lowerLeft:0,lowerRight:0});ctx.fill();
-
-    // Connector
-    ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
-    ctx.beginPath();ctx.moveTo(cx+(panelX>cx?8:-8),cy2);
-    ctx.lineTo(panelX>cx?panelX:panelX+panelW,panelY+panelH/2);ctx.stroke();ctx.setLineDash([]);
-
-    // Header: TEST # + winner badge
-    ctx.font='bold 9px JetBrains Mono';ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.fillStyle='rgba(220,235,255,.9)';
-    ctx.fillText('TEST #'+(pt.idx+1),panelX+10,panelY+10);
-    // Winner badge
-    const badgeC=gcnWins?'#00ffa3':'#4d9eff';
-    const badgeTxt=gcnWins?'GCN gần hơn ✓':'DNN gần hơn ✓';
-    ctx.fillStyle=gcnWins?'rgba(0,255,163,.18)':'rgba(77,158,255,.18)';
-    ctx.strokeStyle=badgeC;ctx.lineWidth=.8;
-    const bW=90,bX=panelX+panelW-bW-6;
-    ctx.beginPath();ctx.roundRect(bX,panelY+4,bW,12,4);ctx.fill();ctx.stroke();
-    ctx.fillStyle=badgeC;ctx.font='bold 7.5px JetBrains Mono';ctx.textAlign='center';
-    ctx.fillText(badgeTxt,bX+bW/2,panelY+10);
-
-    // Helper to draw a row: label left, value right
-    const drawRow=(label,value,color,yy)=>{
-      ctx.textAlign='left';ctx.fillStyle='rgba(130,155,200,.65)';ctx.font='8px JetBrains Mono';
-      ctx.fillText(label,panelX+10,yy);
-      ctx.textAlign='right';ctx.fillStyle=color;ctx.font='bold 9px JetBrains Mono';
-      ctx.fillText(value,panelX+panelW-10,yy);
-    };
-
-    const ROW=18;let ry=panelY+28;
-    drawRow('📍 Vị trí thật',`(${Number(pt.tx).toFixed(2)}, ${Number(pt.ty).toFixed(2)})`,'rgba(220,235,255,.92)',ry); ry+=ROW;
-
-    // GCN row with inline error
-    ctx.textAlign='left';ctx.fillStyle='rgba(0,255,163,.6)';ctx.font='8px JetBrains Mono';
-    ctx.fillText('◈ GCN dự đoán',panelX+10,ry);
-    ctx.textAlign='right';ctx.fillStyle='#00ffa3';ctx.font='bold 9px JetBrains Mono';
-    ctx.fillText(`(${Number(pt.gx).toFixed(2)}, ${Number(pt.gy).toFixed(2)})`,panelX+panelW-10,ry); ry+=ROW;
-
-    ctx.textAlign='left';ctx.fillStyle='rgba(77,158,255,.6)';ctx.font='8px JetBrains Mono';
-    ctx.fillText('◈ DNN dự đoán',panelX+10,ry);
-    ctx.textAlign='right';ctx.fillStyle='#4d9eff';ctx.font='bold 9px JetBrains Mono';
-    ctx.fillText(`(${Number(pt.dx).toFixed(2)}, ${Number(pt.dy).toFixed(2)})`,panelX+panelW-10,ry); ry+=ROW;
-
-    // Divider
-    ctx.strokeStyle='rgba(56,189,248,.12)';ctx.lineWidth=.7;
-    ctx.beginPath();ctx.moveTo(panelX+8,ry-6);ctx.lineTo(panelX+panelW-8,ry-6);ctx.stroke();
-
-    // SAI SỐ GCN — full row
-    // Row GCN err
-    ctx.textAlign='left';ctx.fillStyle='rgba(0,255,163,.6)';ctx.font='8px JetBrains Mono';
-    ctx.fillText('Sai số GCN',panelX+10,ry);
-    ctx.textAlign='right';ctx.fillStyle='#00ffa3';ctx.font='bold 11px JetBrains Mono';
-    // Arrow indicator: smaller = winner
-    const gcnWinPt=pt.gcn_err<pt.dnn_err;
-    if(gcnWinPt){ctx.fillStyle='#00ffa3';}
-    ctx.fillText(pt.gcn_err.toFixed(3)+' m'+(gcnWinPt?' ◀':''),panelX+panelW-10,ry); ry+=ROW;
-
-    // Row DNN err
-    ctx.textAlign='left';ctx.fillStyle='rgba(77,158,255,.6)';ctx.font='8px JetBrains Mono';
-    ctx.fillText('Sai số DNN',panelX+10,ry);
-    ctx.textAlign='right';ctx.fillStyle='#4d9eff';ctx.font='bold 11px JetBrains Mono';
-    if(!gcnWinPt){ctx.fillStyle='#4d9eff';}
-    ctx.fillText(pt.dnn_err.toFixed(3)+' m'+(!gcnWinPt?' ◀':''),panelX+panelW-10,ry); ry+=ROW-4;
-
-    // Footer note
-    ctx.textAlign='center';ctx.fillStyle='rgba(120,150,200,.45)';ctx.font='7px JetBrains Mono';
-    ctx.fillText('◀ = nhỏ hơn = chính xác hơn tại điểm này',panelX+panelW/2,ry);
-
-    ctx.restore();
-  }
-}
-
-// MOUSE
-canvas.addEventListener('mousemove',e=>{
-  if(!sessionPts.length)return;
-  const rect=canvas.getBoundingClientRect();
-  const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
-  const my=(e.clientY-rect.top)*(canvas.height/rect.height);
-  const tip=document.getElementById('tip');
-  let found=null;
-  for(let i=sessionPts.length-1;i>=0;i--){
-    const pt=sessionPts[i];
-    if(Math.hypot(mx-px(pt.true_fx),my-py(pt.true_fy))<14){found=i;break;}
-  }
-  if(found!==null){
-    if(hoverIdx!==found){hoverIdx=found;draw();}
-  }else{
-    if(hoverIdx!==null){hoverIdx=null;draw();}
-  }
-});
-canvas.addEventListener('mouseleave',()=>{hoverIdx=null;draw();});
-
-// UTILS
-function resizeCanvas(){
-  const f=FLOORS[CUR];if(!f)return;
-  const wrap=canvas.parentElement,mW=wrap.clientWidth-26,mH=wrap.clientHeight-26,ratio=f.W/f.H;
-  let w=Math.min(mW,mH*ratio),h=w/ratio;
-  if(h>mH){h=mH;w=h*ratio;}
-  canvas.width=Math.round(w);canvas.height=Math.round(h);draw();
-}
-window.addEventListener('resize',resizeCanvas);
-function toggleLayer(n,el){layers[n]=!layers[n];el.classList.toggle('on',layers[n]);draw();}
-function switchTab(name,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if(btn&&btn.classList)btn.classList.add('active');
-  else document.querySelectorAll('.tab')[name==='sim'?0:1].classList.add('active');
-  document.getElementById('panel-sim').style.display=name==='sim'?'flex':'none';
-  document.getElementById('panel-results').style.display=name==='results'?'block':'none';
-  if(name==='results')requestAnimationFrame(()=>requestAnimationFrame(buildResultsTab));
-}
-
-// ── RESULTS TAB ──
-function buildResultsTab(){
-  if(!DATA)return;
-  renderHistory(); // show test log table
-  const tbody=document.getElementById('sum-tbody');tbody.innerHTML='';
-  let tG=0,tD=0,cnt=0;
-  const order=['HCXY','SYL','UJILIB3','UJILIB5','UJIDOORLOC'];
-  for(const ds of order){
-    if(!DATA[ds])continue;
-    const d=DATA[ds],info=DS_INFO[ds]||{meta:''};
-    const imp=((1-d.gcn_mean/d.dnn_mean)*100).toFixed(1);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="tname">${ds}</td><td class="tdim">${info.meta}</td><td class="tdim">${d.n_ap||'—'}</td>
-      <td class="tdnn">${d.dnn_mean.toFixed(2)}</td><td class="tgcn">${d.gcn_mean.toFixed(2)}</td>
-      <td><span class="timp">↑ ${imp}%</span></td>`;
-    tbody.appendChild(tr);tG+=d.gcn_mean;tD+=d.dnn_mean;cnt++;
-  }
-  if(cnt){
-    const tr=document.createElement('tr');tr.style.background='rgba(0,255,163,.03)';
-    tr.innerHTML=`<td class="tname" style="color:var(--gcn)">Trung bình</td><td class="tdim">—</td><td class="tdim">—</td>
-      <td class="tdnn" style="font-size:14px">${(tD/cnt).toFixed(2)}</td><td class="tgcn" style="font-size:14px">${(tG/cnt).toFixed(2)}</td>
-      <td><span class="timp">↑ ${((1-tG/tD)*100).toFixed(1)}%</span></td>`;
-    tbody.appendChild(tr);
-  }
-
-  const dsl=order.filter(d=>DATA[d]);
-  const gv=dsl.map(d=>DATA[d].gcn_mean),dv=dsl.map(d=>DATA[d].dnn_mean);
-  const iv=dsl.map(d=>+((1-DATA[d].gcn_mean/DATA[d].dnn_mean)*100).toFixed(1));
-
-  // Use ResizeObserver for reliable sizing
-  drawChartWhenReady('chart-err',el=>drawGB(el,dsl,gv,dv));
-  drawChartWhenReady('chart-imp',el=>drawSB(el,dsl,iv));
-  drawChartWhenReady('arch-canvas',el=>drawArch(el));
-}
-
-function drawChartWhenReady(id,fn){
-  const el=document.getElementById(id);if(!el)return;
-  const tryDraw=()=>{
-    const W=el.parentElement.getBoundingClientRect().width;
-    if(W>10){fn(el);}else{requestAnimationFrame(tryDraw);}
-  };
-  requestAnimationFrame(tryDraw);
-}
-
-function drawGB(el,labels,gv,dv){
-  const dpr=window.devicePixelRatio||1;
-  const box=el.parentElement.getBoundingClientRect();
-  const W=Math.max(box.width,200),H=Math.max(box.height,180);
-  el.width=W*dpr;el.height=H*dpr;
-  const c=el.getContext('2d');c.scale(dpr,dpr);
-  const p={t:28,r:12,b:44,l:44},cW=W-p.l-p.r,cH=H-p.t-p.b;
-  const nG=labels.length,bW=Math.min(20,cW/nG*.3),gap=2;
-  const maxV=Math.max(...gv,...dv)*1.2;
-  c.fillStyle='#0c1120';c.fillRect(0,0,W,H);
-  for(let i=0;i<=5;i++){
-    const y=p.t+cH*(1-i/5);
-    c.strokeStyle='rgba(56,189,248,.07)';c.lineWidth=1;c.beginPath();c.moveTo(p.l,y);c.lineTo(p.l+cW,y);c.stroke();
-    c.fillStyle='rgba(120,160,200,.5)';c.font='8px JetBrains Mono';c.textAlign='right';c.textBaseline='middle';
-    c.fillText((maxV*i/5).toFixed(maxV>10?0:1),p.l-4,y);
-  }
-  labels.forEach((lbl,gi)=>{
-    const gX=p.l+gi*cW/nG+cW/nG/2;
-    // GCN
-    const gh=gv[gi]/maxV*cH,gbx=gX-bW-gap/2,gby=p.t+cH-gh;
-    const gg=c.createLinearGradient(gbx,gby,gbx,gby+gh);
-    gg.addColorStop(0,'#00ffa3');gg.addColorStop(1,'rgba(0,255,163,.4)');
-    c.fillStyle=gg;c.beginPath();c.roundRect(gbx,gby,bW,gh,2);c.fill();
-    c.fillStyle='#00ffa3';c.font='bold 8px JetBrains Mono';c.textAlign='center';c.textBaseline='bottom';
-    c.fillText(gv[gi].toFixed(2),gbx+bW/2,gby-2);
-    // DNN
-    const dh=dv[gi]/maxV*cH,dbx=gX+gap/2,dby=p.t+cH-dh;
-    const dg=c.createLinearGradient(dbx,dby,dbx,dby+dh);
-    dg.addColorStop(0,'#4d9eff');dg.addColorStop(1,'rgba(77,158,255,.4)');
-    c.fillStyle=dg;c.beginPath();c.roundRect(dbx,dby,bW,dh,2);c.fill();
-    c.fillStyle='#4d9eff';c.font='bold 8px JetBrains Mono';c.textAlign='center';c.textBaseline='bottom';
-    c.fillText(dv[gi].toFixed(2),dbx+bW/2,dby-2);
-    c.fillStyle='rgba(120,160,200,.7)';c.font='8px JetBrains Mono';c.textAlign='center';c.textBaseline='top';
-    c.fillText(lbl.replace('UJIDOORLOC','UJIDloc').replace('UJILIB','UJI'),gX,p.t+cH+5);
-  });
-  c.strokeStyle='rgba(56,189,248,.2)';c.lineWidth=1;c.beginPath();c.moveTo(p.l,p.t);c.lineTo(p.l,p.t+cH);c.lineTo(p.l+cW,p.t+cH);c.stroke();
-  c.fillStyle='#00ffa3';c.fillRect(p.l,7,9,9);c.fillStyle='rgba(220,230,255,.7)';c.font='9px JetBrains Mono';c.textAlign='left';c.textBaseline='middle';c.fillText('GCN',p.l+12,11);
-  c.fillStyle='#4d9eff';c.fillRect(p.l+46,7,9,9);c.fillStyle='rgba(220,230,255,.7)';c.fillText('DNN',p.l+58,11);
-}
-
-function drawSB(el,labels,vals){
-  const dpr=window.devicePixelRatio||1;
-  const box=el.parentElement.getBoundingClientRect();
-  const W=Math.max(box.width,200),H=Math.max(box.height,180);
-  el.width=W*dpr;el.height=H*dpr;
-  const c=el.getContext('2d');c.scale(dpr,dpr);
-  const p={t:28,r:12,b:44,l:44},cW=W-p.l-p.r,cH=H-p.t-p.b;
-  const nG=labels.length,bW=Math.min(32,cW/nG*.5),maxV=Math.max(...vals)*1.2;
-  c.fillStyle='#0c1120';c.fillRect(0,0,W,H);
-  for(let i=0;i<=5;i++){
-    const y=p.t+cH*(1-i/5);
-    c.strokeStyle='rgba(56,189,248,.07)';c.lineWidth=1;c.beginPath();c.moveTo(p.l,y);c.lineTo(p.l+cW,y);c.stroke();
-    c.fillStyle='rgba(120,160,200,.5)';c.font='8px JetBrains Mono';c.textAlign='right';c.textBaseline='middle';
-    c.fillText((maxV*i/5).toFixed(0)+'%',p.l-4,y);
-  }
-  const cols=['#f97316','#a78bfa','#f472b6','#fb923c','#38bdf8'];
-  labels.forEach((lbl,i)=>{
-    const val=vals[i],bh=val/maxV*cH;
-    const bx=p.l+i*cW/nG+(cW/nG-bW)/2,by=p.t+cH-bh;
-    const gg=c.createLinearGradient(bx,by,bx,by+bh);
-    gg.addColorStop(0,cols[i]);gg.addColorStop(1,cols[i]+'55');
-    c.fillStyle=gg;c.beginPath();c.roundRect(bx,by,bW,bh,2);c.fill();
-    c.fillStyle=cols[i];c.font='bold 8px JetBrains Mono';c.textAlign='center';c.textBaseline='bottom';
-    c.fillText('+'+val.toFixed(1)+'%',bx+bW/2,by-2);
-    c.fillStyle='rgba(120,160,200,.7)';c.font='8px JetBrains Mono';c.textAlign='center';c.textBaseline='top';
-    c.fillText(lbl.replace('UJIDOORLOC','UJIDloc').replace('UJILIB','UJI'),bx+bW/2,p.t+cH+5);
-  });
-  c.strokeStyle='rgba(56,189,248,.2)';c.lineWidth=1;c.beginPath();c.moveTo(p.l,p.t);c.lineTo(p.l,p.t+cH);c.lineTo(p.l+cW,p.t+cH);c.stroke();
-  c.fillStyle='rgba(220,230,255,.7)';c.font='9px JetBrains Mono';c.textAlign='left';c.textBaseline='middle';c.fillText('Cải thiện GCN vs DNN (%)',p.l,12);
-}
-
-function drawArch(el){
-  const dpr=window.devicePixelRatio||1;
-  const box=el.parentElement.getBoundingClientRect();
-  const W=Math.max(box.width,300),H=96;
-  el.width=W*dpr;el.height=H*dpr;
-  const ax=el.getContext('2d');ax.scale(dpr,dpr);
-  ax.fillStyle='#0c1120';ax.fillRect(0,0,W,H);
-  const nodes=[
-    {x:.06,label:'RSSI',sub:'Input',c:'#4d9eff'},
-    {x:.22,label:'Graph',sub:'kNN+Â',c:'#a78bfa'},
-    {x:.38,label:'GCN L1',sub:'Â·H·W',c:'#00ffa3'},
-    {x:.54,label:'GCN L2',sub:'Â·H·W',c:'#00ffa3'},
-    {x:.70,label:'FC',sub:'→128',c:'#fbbf24'},
-    {x:.86,label:'(x̂,ŷ)',sub:'tọa độ',c:'#f472b6'}
-  ];
-  const bw=66,bh=50,cy=H/2;
-  nodes.forEach((n,i)=>{
-    const nx=n.x*W;
-    if(i<nodes.length-1){
-      const nx2=nodes[i+1].x*W;
-      ax.strokeStyle='rgba(150,180,230,.15)';ax.lineWidth=1.5;
-      ax.beginPath();ax.moveTo(nx+bw/2+2,cy);ax.lineTo(nx2-bw/2-2,cy);ax.stroke();
-      ax.fillStyle='rgba(150,180,230,.15)';ax.beginPath();
-      ax.moveTo(nx2-bw/2-2,cy);ax.lineTo(nx2-bw/2-8,cy-4);ax.lineTo(nx2-bw/2-8,cy+4);ax.closePath();ax.fill();
-    }
-    ax.fillStyle=n.c+'18';ax.strokeStyle=n.c+'66';ax.lineWidth=1;
-    ax.beginPath();ax.roundRect(nx-bw/2,cy-bh/2,bw,bh,5);ax.fill();ax.stroke();
-    ax.fillStyle=n.c;ax.font='bold 10px JetBrains Mono';ax.textAlign='center';ax.textBaseline='middle';
-    ax.fillText(n.label,nx,cy-8);
-    ax.fillStyle='rgba(180,200,230,.35)';ax.font='8px JetBrains Mono';ax.fillText(n.sub,nx,cy+8);
-  });
-}
-
-loadPredictions();
-</script>
+        window.addEventListener('load', loadPredictions);
+    </script>
 </body>
 </html>
